@@ -1,0 +1,107 @@
+{
+  "source_file": "CBSL_USD_TT_Selling.csv",
+  "source_sha256": "b76b443cee6db1bcaa6ffcb515490aafa8e8c2ef339fa411a328cf287af74969",
+  "raw_source_unchanged_during_processing": true,
+  "canonical_schema": [
+    "date",
+    "usd_lkr_rate",
+    "source"
+  ],
+  "source_order_sorted_ascending": true,
+  "unique_quote_dates": true,
+  "all_rates_positive": true,
+  "date_start": "2010-05-07",
+  "date_end": "2026-11-19",
+  "observation_count": 3381,
+  "selling_rate_min": 91.6728,
+  "selling_rate_max": 377.4967,
+  "overall_calendar_gaps": {
+    "gap_count": 3380,
+    "maximum_calendar_gap_days": 120,
+    "gaps_longer_than_three_calendar_days": 160
+  },
+  "calibration": {
+    "start": "2019-01-01",
+    "end": "2024-12-31",
+    "quote_count": 1445,
+    "return_count_both_dates_in_period": 1444,
+    "calendar_gaps": {
+      "gap_count": 1444,
+      "maximum_calendar_gap_days": 6,
+      "gaps_longer_than_three_calendar_days": 57
+    },
+    "return_count": 1444,
+    "mean_log_return_per_observed_quote_step": 0.00032922350321713746,
+    "sample_std_log_return_per_observed_quote_step": 0.006684356015704517,
+    "minimum_log_return": -0.047357863692597146,
+    "maximum_log_return": 0.12487161858598624
+  },
+  "evaluation": {
+    "start": "2025-01-01",
+    "end": "2026-12-31 (available data through source end date)",
+    "quote_count": 457,
+    "return_count_current_quote_in_period": 457,
+    "first_evaluation_return_uses_prior_quote_date": "2024-12-31",
+    "calendar_gaps": {
+      "gap_count": 456,
+      "maximum_calendar_gap_days": 5,
+      "gaps_longer_than_three_calendar_days": 14
+    },
+    "return_count": 457,
+    "mean_log_return_per_observed_quote_step": 0.0002781196317752184,
+    "sample_std_log_return_per_observed_quote_step": 0.0037197517558012322,
+    "minimum_log_return": -0.048589418291867775,
+    "maximum_log_return": 0.03253159544844716
+  },
+  "audit": {
+    "input_file": "CBSL_USD_TT_Selling.csv",
+    "raw_rows_including_blank_rows": 3382,
+    "blank_rows_removed": 1,
+    "nonblank_rows": 3381,
+    "usd_rows_before_validation": 3381,
+    "non_usd_rows_excluded": 0,
+    "non_usd_currency_counts": {},
+    "usd_rows_missing_date_removed": 0,
+    "usd_rows_missing_sell_rate_removed": 0,
+    "duplicate_date_rows_removed": 0,
+    "buy_rate_missing_or_non_numeric": 0,
+    "buy_rate_nonpositive": 0,
+    "buy_rate_greater_than_sell_records": [
+      {
+        "date": "2011-02-28",
+        "buy_rate": 109.948,
+        "sell_rate": 91.6728,
+        "csv_row": 3334
+      },
+      {
+        "date": "2010-07-19",
+        "buy_rate": 113.5755,
+        "sell_rate": 111.9651,
+        "csv_row": 3380
+      }
+    ],
+    "duplicate_date_rows": [],
+    "observation_count": 3381,
+    "date_start": "2010-05-07",
+    "date_end": "2026-11-19",
+    "selling_rate_min": 91.6728,
+    "selling_rate_max": 377.4967,
+    "weekend_quote_count": 1
+  },
+  "processing": {
+    "return_definition": "ln(current observed USD TT selling rate / previous observed USD TT selling rate)",
+    "missing_calendar_dates_filled": false,
+    "returns_divided_by_calendar_gap_days": false,
+    "calibration_boundary_returns_require_both_dates_in_calibration": true,
+    "evaluation_boundary_return_uses_previous_observed_quote": true
+  },
+  "outputs": {
+    "cleaned_quotes": "cleaned_usd_lkr.csv",
+    "all_returns": "daily_log_returns.csv",
+    "calibration_quotes": "calibration_quotes_2019_2024.csv",
+    "evaluation_quotes": "evaluation_quotes_2025_2026.csv",
+    "calibration_returns": "calibration_returns_2019_2024.csv",
+    "evaluation_returns": "evaluation_returns_2025_2026.csv",
+    "rate_chart": "D:\\Learning\\Projects\\Python\\usd-lkr-importer-risk-simulator-MSS\\usd-lkr-importer-risk-simulator\\Figures\\usd_lkr_selling_rate.png"
+  }
+}
