@@ -1,0 +1,531 @@
+{
+  "scenario": {
+    "label": "hypothetical end-2024 importer invoice, not a real payment or forecast",
+    "invoice_usd": 100000.0,
+    "reference_date": "2024-12-31",
+    "due_date": "2025-03-31",
+    "horizon_calendar_days": 90,
+    "reference_rate_lkr_per_usd": 297.0162,
+    "reference_cost_lkr": 29701620.000000004,
+    "budget_margin": 0.05,
+    "budget_lkr": 31186701.000000004,
+    "risk_level": 0.95,
+    "n_paths_per_run": 10000,
+    "replicate_seeds": [
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49
+    ],
+    "total_paths_per_model": 80000,
+    "markov_quote_schedule": "Monday-Friday proxy, holidays and settlement unverified",
+    "markov_quote_day_offsets": [
+      1,
+      2,
+      3,
+      6,
+      7,
+      8,
+      9,
+      10,
+      13,
+      14,
+      15,
+      16,
+      17,
+      20,
+      21,
+      22,
+      23,
+      24,
+      27,
+      28,
+      29,
+      30,
+      31,
+      34,
+      35,
+      36,
+      37,
+      38,
+      41,
+      42,
+      43,
+      44,
+      45,
+      48,
+      49,
+      50,
+      51,
+      52,
+      55,
+      56,
+      57,
+      58,
+      59,
+      62,
+      63,
+      64,
+      65,
+      66,
+      69,
+      70,
+      71,
+      72,
+      73,
+      76,
+      77,
+      78,
+      79,
+      80,
+      83,
+      84,
+      85,
+      86,
+      87,
+      90
+    ]
+  },
+  "input_hashes": {
+    "raw_sha256": "b76b443cee6db1bcaa6ffcb515490aafa8e8c2ef339fa411a328cf287af74969",
+    "prepared_sha256": "26c31f3c43d19c80cf1b6f37c1906bc79df46ffff1f25cd76d45aa68cf479849"
+  },
+  "methods": {
+    "loss": "signed extra cost L=Q*(S_T-S_0); no zero clamp",
+    "var": "empirical left quantile of L at risk_level",
+    "es": "quantile-integral upper-tail mean with fractional boundary weighting",
+    "cost_percentiles": "NumPy linear interpolation",
+    "budget_exceedance": "strictly greater than the fixed LKR budget",
+    "mean_cost_ci": "approximate normal 95% Monte Carlo interval using pooled independent paths and sample SD",
+    "tail_uncertainty": "sample SD and min/max of VaR and ES across independent seeded replicate batches; not a confidence interval",
+    "model_comparison": "same invoice, reference, due date, budget, path count and seed list; RNG draws are not paired across algorithms"
+  },
+  "gbm_analytic_expected_cost_lkr": 30341885.701820355,
+  "models": {
+    "gbm": {
+      "pooled_metrics": {
+        "n_paths": 80000,
+        "reference_cost_lkr": 29701620.000000004,
+        "mean_cost_lkr": 30339206.121881444,
+        "median_cost_lkr": 30281461.66596534,
+        "p05_cost_lkr": 27429325.59914656,
+        "p95_cost_lkr": 33432831.599625498,
+        "mean_extra_cost_lkr": 637586.1218814421,
+        "budget_exceedance_probability": 0.3129125,
+        "var_lkr": 3731194.3695206568,
+        "es_lkr": 4582740.554052157,
+        "mean_cost_mc_se_lkr": 6452.3414774498215,
+        "mean_cost_mc_ci95_lkr": [
+          30326559.764969688,
+          30351852.4787932
+        ]
+      },
+      "between_run_variability": {
+        "mean_cost_lkr": {
+          "mean": 30339206.121881448,
+          "sample_sd": 15537.893132686713,
+          "min": 30322950.33379292,
+          "max": 30366332.560486425
+        },
+        "budget_exceedance_probability": {
+          "mean": 0.31291250000000004,
+          "sample_sd": 0.0036829481591324604,
+          "min": 0.3067,
+          "max": 0.3192
+        },
+        "var_lkr": {
+          "mean": 3728741.3304984653,
+          "sample_sd": 25631.754938965092,
+          "min": 3694958.777641967,
+          "max": 3778624.0047359616
+        },
+        "es_lkr": {
+          "mean": 4582371.72890217,
+          "sample_sd": 24240.672390034764,
+          "min": 4543406.812795692,
+          "max": 4608106.351007077
+        }
+      },
+      "runs": [
+        {
+          "seed": 42,
+          "metrics": {
+            "n_paths": 10000,
+            "reference_cost_lkr": 29701620.000000004,
+            "mean_cost_lkr": 30323919.21260531,
+            "median_cost_lkr": 30263418.20488064,
+            "p05_cost_lkr": 27393273.098177373,
+            "p95_cost_lkr": 33424219.827213004,
+            "mean_extra_cost_lkr": 622299.212605307,
+            "budget_exceedance_probability": 0.3067,
+            "var_lkr": 3722588.410971485,
+            "es_lkr": 4602836.00018156,
+            "mean_cost_mc_se_lkr": 18323.0273221222,
+            "mean_cost_mc_ci95_lkr": [
+              30288006.738966204,
+              30359831.686244413
+            ]
+          }
+        },
+        {
+          "seed": 43,
+          "metrics": {
+            "n_paths": 10000,
+            "reference_cost_lkr": 29701620.000000004,
+            "mean_cost_lkr": 30322950.33379292,
+            "median_cost_lkr": 30275510.999323774,
+            "p05_cost_lkr": 27401702.216658294,
+            "p95_cost_lkr": 33406611.97342416,
+            "mean_extra_cost_lkr": 621330.333792914,
+            "budget_exceedance_probability": 0.3101,
+            "var_lkr": 3704851.8401067927,
+            "es_lkr": 4608106.351007077,
+            "mean_cost_mc_se_lkr": 18226.311856617795,
+            "mean_cost_mc_ci95_lkr": [
+              30287227.418982957,
+              30358673.248602886
+            ]
+          }
+        },
+        {
+          "seed": 44,
+          "metrics": {
+            "n_paths": 10000,
+            "reference_cost_lkr": 29701620.000000004,
+            "mean_cost_lkr": 30348347.34966193,
+            "median_cost_lkr": 30279847.75973636,
+            "p05_cost_lkr": 27430503.237132262,
+            "p95_cost_lkr": 33438562.27882982,
+            "mean_extra_cost_lkr": 646727.3496619266,
+            "budget_exceedance_probability": 0.3144,
+            "var_lkr": 3736924.201928258,
+            "es_lkr": 4591151.912832517,
+            "mean_cost_mc_se_lkr": 18277.94075974607,
+            "mean_cost_mc_ci95_lkr": [
+              30312523.244061273,
+              30384171.45526259
+            ]
+          }
+        },
+        {
+          "seed": 45,
+          "metrics": {
+            "n_paths": 10000,
+            "reference_cost_lkr": 29701620.000000004,
+            "mean_cost_lkr": 30346488.755343065,
+            "median_cost_lkr": 30287632.96167166,
+            "p05_cost_lkr": 27455758.675651465,
+            "p95_cost_lkr": 33422321.544477727,
+            "mean_extra_cost_lkr": 644868.7553430668,
+            "budget_exceedance_probability": 0.315,
+            "var_lkr": 3720674.997252386,
+            "es_lkr": 4599618.764384973,
+            "mean_cost_mc_se_lkr": 18221.22945014453,
+            "mean_cost_mc_ci95_lkr": [
+              30310775.80186674,
+              30382201.70881939
+            ]
+          }
+        },
+        {
+          "seed": 46,
+          "metrics": {
+            "n_paths": 10000,
+            "reference_cost_lkr": 29701620.000000004,
+            "mean_cost_lkr": 30366332.560486425,
+            "median_cost_lkr": 30313697.914088927,
+            "p05_cost_lkr": 27489758.09086603,
+            "p95_cost_lkr": 33480491.19479526,
+            "mean_extra_cost_lkr": 664712.5604864227,
+            "budget_exceedance_probability": 0.3135,
+            "var_lkr": 3778624.0047359616,
+            "es_lkr": 4570092.768287588,
+            "mean_cost_mc_se_lkr": 18129.458274299224,
+            "mean_cost_mc_ci95_lkr": [
+              30330799.475209575,
+              30401865.645763274
+            ]
+          }
+        },
+        {
+          "seed": 47,
+          "metrics": {
+            "n_paths": 10000,
+            "reference_cost_lkr": 29701620.000000004,
+            "mean_cost_lkr": 30325433.792955633,
+            "median_cost_lkr": 30251280.16454644,
+            "p05_cost_lkr": 27451558.808396924,
+            "p95_cost_lkr": 33445542.507675435,
+            "mean_extra_cost_lkr": 623813.7929556284,
+            "budget_exceedance_probability": 0.3129,
+            "var_lkr": 3743815.057009533,
+            "es_lkr": 4591482.876962956,
+            "mean_cost_mc_se_lkr": 18320.41576641096,
+            "mean_cost_mc_ci95_lkr": [
+              30289526.43787167,
+              30361341.148039598
+            ]
+          }
+        },
+        {
+          "seed": 48,
+          "metrics": {
+            "n_paths": 10000,
+            "reference_cost_lkr": 29701620.000000004,
+            "mean_cost_lkr": 30348099.913777612,
+            "median_cost_lkr": 30301533.93806889,
+            "p05_cost_lkr": 27415217.582643375,
+            "p95_cost_lkr": 33429125.689733062,
+            "mean_extra_cost_lkr": 646479.9137776077,
+            "budget_exceedance_probability": 0.3192,
+            "var_lkr": 3727493.3543413393,
+            "es_lkr": 4543406.812795692,
+            "mean_cost_mc_se_lkr": 18249.51808969792,
+            "mean_cost_mc_ci95_lkr": [
+              30312331.515586592,
+              30383868.311968632
+            ]
+          }
+        },
+        {
+          "seed": 49,
+          "metrics": {
+            "n_paths": 10000,
+            "reference_cost_lkr": 29701620.000000004,
+            "mean_cost_lkr": 30332077.056428675,
+            "median_cost_lkr": 30276774.965246186,
+            "p05_cost_lkr": 27423340.730536535,
+            "p95_cost_lkr": 33396709.153796975,
+            "mean_extra_cost_lkr": 630457.0564286644,
+            "budget_exceedance_probability": 0.3115,
+            "var_lkr": 3694958.777641967,
+            "es_lkr": 4552278.344764997,
+            "mean_cost_mc_se_lkr": 18252.937546001973,
+            "mean_cost_mc_ci95_lkr": [
+              30296301.956226453,
+              30367852.156630896
+            ]
+          }
+        }
+      ]
+    },
+    "markov": {
+      "pooled_metrics": {
+        "n_paths": 80000,
+        "reference_cost_lkr": 29701620.000000004,
+        "mean_cost_lkr": 30345423.410998397,
+        "median_cost_lkr": 30294818.689656995,
+        "p05_cost_lkr": 27475905.042780697,
+        "p95_cost_lkr": 33380811.680168193,
+        "mean_extra_cost_lkr": 643803.4109983929,
+        "budget_exceedance_probability": 0.3050875,
+        "var_lkr": 3679168.8959837444,
+        "es_lkr": 4609172.149477426,
+        "mean_cost_mc_se_lkr": 6360.63900462052,
+        "mean_cost_mc_ci95_lkr": [
+          30332956.78763068,
+          30357890.034366112
+        ]
+      },
+      "between_run_variability": {
+        "mean_cost_lkr": {
+          "mean": 30345423.410998397,
+          "sample_sd": 23904.843046045222,
+          "min": 30317130.63497296,
+          "max": 30377642.290802635
+        },
+        "budget_exceedance_probability": {
+          "mean": 0.30508749999999996,
+          "sample_sd": 0.005838404258503713,
+          "min": 0.2949,
+          "max": 0.312
+        },
+        "var_lkr": {
+          "mean": 3680845.721779258,
+          "sample_sd": 47897.82462095074,
+          "min": 3586304.0465788916,
+          "max": 3750779.832112089
+        },
+        "es_lkr": {
+          "mean": 4608124.347772019,
+          "sample_sd": 84196.48927262533,
+          "min": 4497478.433635255,
+          "max": 4721192.478955089
+        }
+      },
+      "runs": [
+        {
+          "seed": 42,
+          "metrics": {
+            "n_paths": 10000,
+            "reference_cost_lkr": 29701620.000000004,
+            "mean_cost_lkr": 30377642.290802635,
+            "median_cost_lkr": 30336350.237227052,
+            "p05_cost_lkr": 27503695.74526329,
+            "p95_cost_lkr": 33416121.462874178,
+            "mean_extra_cost_lkr": 676022.2908026365,
+            "budget_exceedance_probability": 0.311,
+            "var_lkr": 3714422.4155133516,
+            "es_lkr": 4581009.160682861,
+            "mean_cost_mc_se_lkr": 17890.055548889366,
+            "mean_cost_mc_ci95_lkr": [
+              30342578.42624539,
+              30412706.15535988
+            ]
+          }
+        },
+        {
+          "seed": 43,
+          "metrics": {
+            "n_paths": 10000,
+            "reference_cost_lkr": 29701620.000000004,
+            "mean_cost_lkr": 30317130.63497296,
+            "median_cost_lkr": 30258480.128988788,
+            "p05_cost_lkr": 27473832.307363823,
+            "p95_cost_lkr": 33376970.826500185,
+            "mean_extra_cost_lkr": 615510.6349729559,
+            "budget_exceedance_probability": 0.3036,
+            "var_lkr": 3675340.74854517,
+            "es_lkr": 4497478.433635255,
+            "mean_cost_mc_se_lkr": 17971.715206893554,
+            "mean_cost_mc_ci95_lkr": [
+              30281906.720427036,
+              30352354.549518883
+            ]
+          }
+        },
+        {
+          "seed": 44,
+          "metrics": {
+            "n_paths": 10000,
+            "reference_cost_lkr": 29701620.000000004,
+            "mean_cost_lkr": 30360670.797757495,
+            "median_cost_lkr": 30306045.48326853,
+            "p05_cost_lkr": 27476850.684348278,
+            "p95_cost_lkr": 33388551.114101496,
+            "mean_extra_cost_lkr": 659050.7977574908,
+            "budget_exceedance_probability": 0.312,
+            "var_lkr": 3686784.2858108245,
+            "es_lkr": 4721192.478955089,
+            "mean_cost_mc_se_lkr": 18191.097375348847,
+            "mean_cost_mc_ci95_lkr": [
+              30325016.90206255,
+              30396324.69345244
+            ]
+          }
+        },
+        {
+          "seed": 45,
+          "metrics": {
+            "n_paths": 10000,
+            "reference_cost_lkr": 29701620.000000004,
+            "mean_cost_lkr": 30342942.921461646,
+            "median_cost_lkr": 30289682.854080506,
+            "p05_cost_lkr": 27487523.355611067,
+            "p95_cost_lkr": 33389482.63442379,
+            "mean_extra_cost_lkr": 641322.921461641,
+            "budget_exceedance_probability": 0.3059,
+            "var_lkr": 3687821.121272031,
+            "es_lkr": 4626317.316141604,
+            "mean_cost_mc_se_lkr": 18093.24261451526,
+            "mean_cost_mc_ci95_lkr": [
+              30307480.81757365,
+              30378405.02534964
+            ]
+          }
+        },
+        {
+          "seed": 46,
+          "metrics": {
+            "n_paths": 10000,
+            "reference_cost_lkr": 29701620.000000004,
+            "mean_cost_lkr": 30369756.18754109,
+            "median_cost_lkr": 30328322.542166576,
+            "p05_cost_lkr": 27470335.47865005,
+            "p95_cost_lkr": 33353701.25048942,
+            "mean_extra_cost_lkr": 668136.1875410893,
+            "budget_exceedance_probability": 0.3082,
+            "var_lkr": 3651983.4928819016,
+            "es_lkr": 4574909.888324015,
+            "mean_cost_mc_se_lkr": 17837.74901002345,
+            "mean_cost_mc_ci95_lkr": [
+              30334794.841916177,
+              30404717.533166002
+            ]
+          }
+        },
+        {
+          "seed": 47,
+          "metrics": {
+            "n_paths": 10000,
+            "reference_cost_lkr": 29701620.000000004,
+            "mean_cost_lkr": 30322690.476373848,
+            "median_cost_lkr": 30303815.12070766,
+            "p05_cost_lkr": 27493586.681896377,
+            "p95_cost_lkr": 33288214.984547578,
+            "mean_extra_cost_lkr": 621070.4763738409,
+            "budget_exceedance_probability": 0.2989,
+            "var_lkr": 3586304.0465788916,
+            "es_lkr": 4505065.604518907,
+            "mean_cost_mc_se_lkr": 17670.282026353525,
+            "mean_cost_mc_ci95_lkr": [
+              30288057.360005528,
+              30357323.592742167
+            ]
+          }
+        },
+        {
+          "seed": 48,
+          "metrics": {
+            "n_paths": 10000,
+            "reference_cost_lkr": 29701620.000000004,
+            "mean_cost_lkr": 30318294.59199215,
+            "median_cost_lkr": 30251432.02042932,
+            "p05_cost_lkr": 27432599.051050767,
+            "p95_cost_lkr": 33394950.622009974,
+            "mean_extra_cost_lkr": 616674.5919921489,
+            "budget_exceedance_probability": 0.2949,
+            "var_lkr": 3693329.831519805,
+            "es_lkr": 4651104.922900861,
+            "mean_cost_mc_se_lkr": 18053.866870185,
+            "mean_cost_mc_ci95_lkr": [
+              30282909.66314491,
+              30353679.520839393
+            ]
+          }
+        },
+        {
+          "seed": 49,
+          "metrics": {
+            "n_paths": 10000,
+            "reference_cost_lkr": 29701620.000000004,
+            "mean_cost_lkr": 30354259.387085345,
+            "median_cost_lkr": 30301229.15700859,
+            "p05_cost_lkr": 27475583.504538015,
+            "p95_cost_lkr": 33452438.688892093,
+            "mean_extra_cost_lkr": 652639.38708534,
+            "budget_exceedance_probability": 0.3062,
+            "var_lkr": 3750779.832112089,
+            "es_lkr": 4707916.977017562,
+            "mean_cost_mc_se_lkr": 18205.406099129086,
+            "mean_cost_mc_ci95_lkr": [
+              30318577.446807127,
+              30389941.32736356
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "limitations": [
+    "Monte Carlo uncertainty is conditional on historical fitted parameters; it excludes calibration and structural uncertainty.",
+    "The Markov Monday-Friday quote schedule ignores actual holidays and settlement conventions.",
+    "The 2022 exchange-rate movements strongly affect fitted volatilities.",
+    "The 2025-2026 evaluation snapshot is not used for calibration or scenario choice.",
+    "Trading fees and importer-specific bank spreads are excluded."
+  ]
+}

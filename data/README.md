@@ -43,7 +43,7 @@ The large March 2022 movements are retained. The calibration-return file shows +
 
 data/processed/daily_log_returns.csv calculates each return as ln(current observed selling rate / previous observed selling rate). It uses consecutive valid quote observations. calendar_gap_days makes elapsed calendar time explicit; a multi-day return is not divided by the gap length or relabelled as a one-calendar-day move.
 
-The primary GBM calibration uses each return's actual interval, `calendar_gap_days/365` years. An invoice due in `H` calendar days has model horizon `H/365` years. This assumes Brownian variance accrues across closures; it does not fill unquoted dates. A separate 252-equal-quote-session comparison will test time-convention sensitivity with its own declared future quotation schedule. The 2019–2024 calibration returns include 357 gaps longer than one day, 57 longer than three, and a six-day maximum. [THEORY.md](../THEORY.md) records the fitted baseline and the 2019–2021, 2022–2024, full-period and extra 2022-excluded comparison plan. No importer payment-risk outputs have yet been calculated.
+The primary GBM calibration uses each return's actual interval, `calendar_gap_days/365` years. An invoice due in `H` calendar days has model horizon `H/365` years. This assumes Brownian variance accrues across closures; it does not fill unquoted dates. A separate 252-equal-quote-session comparison will test time-convention sensitivity with its own declared future quotation schedule. The 2019–2024 calibration returns include 357 gaps longer than one day, 57 longer than three, and a six-day maximum. [THEORY.md](../THEORY.md) records the fitted baseline and the 2019–2021, 2022–2024, full-period and extra 2022-excluded comparison plan. The Stage 6 hypothetical importer-risk report is a derived simulation artifact, not an additional observed data source.
 
 - Calibration quote and return files cover 2019-01-01 to 2024-12-31. A calibration return is included only when both quote dates are in this period.
 - Evaluation quote files cover 2025-01-01 through the available source end date in 2026. An evaluation return is selected by its current quote date; the first observation may use the immediately preceding 2024 quote as the return anchor. No future observation is used.
@@ -60,6 +60,7 @@ Generated files:
 - data/processed/data_quality_report.json
 - data/processed/gbm_calibration_2019_2024.json (from `python -m src.calibration`; 1,444 training returns, 2,191 elapsed days, annual `alpha`, `sigma` and `mu`, source and prepared-file hashes)
 - data/processed/markov_calibration_2019_2024.json (from `python -m src.markov`; 70th-percentile training-only stable/volatile rule, state and transition counts, row probabilities, residual RMS and input hashes)
+- data/processed/importer_risk_baseline_2019_2024.json (from `python -m src.run_risk`; hypothetical USD invoice and 90-day calendar horizon, input hashes, seeds, GBM/Markov payment metrics and Monte Carlo uncertainty)
 - figures/usd_lkr_selling_rate.png
 
 ## Limitations

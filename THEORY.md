@@ -2,7 +2,7 @@
 
 ## 1. Problem formulation
 
-The intended application is to examine uncertainty in the LKR cost of future USD-denominated importer payments. This repository prepares historical quotes, fits a calendar-time GBM and a bounded two-state quote-step Markov volatility extension, and provides exact rate transitions under both models. Importer payment-risk calculations are not implemented yet.
+The application examines uncertainty in the LKR cost of hypothetical future USD-denominated importer payments. This repository prepares historical quotes, fits a calendar-time GBM and a bounded two-state quote-step Markov volatility extension, simulates rates, and calculates importer payment-risk metrics under a declared scenario.
 
 ## 2. Data and assumptions
 
@@ -63,7 +63,7 @@ The planned geometric Brownian motion model is written as
 dS_t = \mu S_t\,dt + \sigma S_t\,dW_t,
 \]
 
-where \(\mu\) is annual level drift, \(\sigma\) is annual volatility (per square-root year), and \(W_t\) is Brownian motion in elapsed years. The GBM core now fits these coefficients and can simulate rates. It has not yet converted rates into importer payment or tail-risk results.
+where \(\mu\) is annual level drift, \(\sigma\) is annual volatility (per square-root year), and \(W_t\) is Brownian motion in elapsed years. The GBM core fits these coefficients and simulates rates; `src/risk.py` converts terminal rates to invoice costs and upper-tail risk.
 
 ## 4. Calibration periods and sensitivity design
 
@@ -90,7 +90,7 @@ The data pipeline parses, validates and sorts USD quotes, then calculates adjace
 S_{t+\delta}=S_t\exp\left(\alpha\delta+\sigma\sqrt{\delta}Z\right).
 \]
 
-Terminal-only sampling uses \(\delta=H/365\) directly. A path chart can use daily or caller-supplied positive intervals that sum to the same \(H\) calendar days. Local NumPy generators with explicit seeds give repeatable draws; the exact transition avoids Euler time-step bias. The module also exposes analytical mean, variance and rate quantiles for verification. These are **rate** outputs only; payment costs, VaR and ES belong to later work.
+Terminal-only sampling uses \(\delta=H/365\) directly. A path chart can use daily or caller-supplied positive intervals that sum to the same \(H\) calendar days. Local NumPy generators with explicit seeds give repeatable draws; the exact transition avoids Euler time-step bias. The module also exposes analytical mean, variance and rate quantiles for verification. Payment costs, VaR and ES are computed separately from terminal rates in `src/risk.py`.
 
 For \(T=H/365\), independent analytical benchmarks are
 
@@ -130,20 +130,45 @@ P=\begin{pmatrix}0.814851485149&0.185148514851\\0.431870669746&0.568129330254\en
 
 The last training return is labelled stable. For future paths, provide assumed quotation-day offsets measured from the reference date. At each assumed quote, sample the **next** state from the current row of \(P\), then draw an independent normal shock and apply \(\hat\alpha\delta+\hat\sigma_{\mathrm{new}}\sqrt{\delta}Z\), where \(\delta\) is that quote gap divided by 365. If maturity follows the last assumed quote, the residual interval uses the current state without an extra transition. The `weekday_quote_offsets` helper is only a Monday–Friday proxy: it includes unverified weekday holidays and does not model settlement timing. The 90-day smoke check used 64 assumed weekday quotes; its output was checked for positive finite rates, not interpreted as a forecast.
 
-This uses one common **log** drift across states, so the level drift varies with \(\hat\sigma_k^2/2\). The volatile RMS is much larger because the retained 2022 jumps enter that class. Conditional normality, persistence and the future quotation schedule are modelling assumptions; the fitted matrix is not evidence of a crisis predictor. VaR/ES comparison with constant GBM belongs to later importer-risk work.
+This uses one common **log** drift across states, so the level drift varies with \(\hat\sigma_k^2/2\). The volatile RMS is much larger because the retained 2022 jumps enter that class. Conditional normality, persistence and the future quotation schedule are modelling assumptions; the fitted matrix is not evidence of a crisis predictor.
+
+### Hypothetical importer payment risk
+
+Stage 6 fixes a hypothetical USD invoice \(Q=100{,}000\), the 2024-12-31 training-end selling rate \(S_0=297.0162\) LKR/USD, and a 90-calendar-day due date of 2025-03-31. The reference cost is \(C_0=QS_0=29{,}701{,}620\) LKR. An illustrative budget is 5% higher, \(B=31{,}186{,}701\) LKR. These values are assumptions, not a real importer's bill. The end-2024 anchor makes this a retrospective hypothetical scenario; the 2025–2026 observations are not used to choose its inputs or fit its models.
+
+For each simulated terminal rate \(S_T^{(j)}\), `src/risk.py` calculates
+
+\[
+C_T^{(j)}=Q S_T^{(j)},\qquad L^{(j)}=C_T^{(j)}-C_0.
+\]
+
+The signed extra cost \(L\) can be negative, meaning a saving relative to the reference conversion. The budget exceedance estimate is \(N^{-1}\sum_j 1\{C_T^{(j)}>B\}\), with a strict inequality. At level \(p=0.95\), importer VaR is the empirical **upper** left quantile of \(L\), and ES is the average of the worst \((1-p)N\) observations, fractionally weighting the boundary observation when needed. This implements the quantile-integral upper-tail convention even when outcomes tie; it does not use the lower 5% of FX returns or clamp losses at zero. The 5th/95th *cost* percentiles use NumPy linear interpolation and are separate from VaR of extra cost.
+
+`src/run_risk.py` uses eight distinct seeds, 42–49, with 10,000 independent paths per seed and model (80,000 pooled paths per model). The GBM draws terminal rates directly over 90/365 years. The Markov draws quote-step paths over an explicit 64-date Monday–Friday proxy; holidays and settlement timing are unverified. Both models share the invoice, starting rate, due date, budget, path count and seed list, but the RNG algorithms do not make their individual paths paired. The report includes each replicate's metrics and pooled metrics.
+
+| Model | Mean cost, LKR | 95% VaR of extra cost, LKR | 95% ES of extra cost, LKR | Pr(cost > budget) |
+|---|---:|---:|---:|---:|
+| GBM | 30,339,206 | 3,731,194 | 4,582,741 | 0.3129 |
+| Markov | 30,345,423 | 3,679,169 | 4,609,172 | 0.3051 |
+
+The pooled mean-cost 95% Monte Carlo intervals are approximately LKR [30,326,560, 30,351,852] for GBM and [30,332,957, 30,357,890] for Markov. They use \(\bar C\pm z_{0.975}s_C/\sqrt N\), conditional on independent finite-variance paths and fixed fitted parameters. The saved report also gives the **between-replicate** sample SD and min/max for VaR and ES; these are observed run-to-run variation, not tail-risk confidence intervals. GBM's simulated mean cost differs from its analytical expected cost by -0.42 pooled Monte Carlo standard errors in this run.
+
+The numerical intervals exclude uncertainty in the historical calibration window, the 2022 regime change, the Markov state rule, time convention and source-data lineage. Fees and importer-specific bank spreads are excluded. Neither model's results are validated predictions of actual future payment costs.
 
 ## 6. Verification
 
-The full local Windows suite was rerun after the Stage 5 code and test changes on 2026-11-23: **44 passed in 5.83s** using `.venv\Scripts\python.exe -m pytest -q`. This includes the nine data-preparation tests, 13 GBM test cases and 22 Markov test cases. It checks code and mathematical/probability identities, not the source CSV's authenticity or the real-world predictive adequacy of either model. A Linux/Colab run has not yet been performed.
+The full local Windows suite was rerun after Stage 6 code and test changes on 2026-11-23: **59 passed in 2.38s** using `.venv\Scripts\python.exe -m pytest -q`. This includes nine data-preparation tests, 13 GBM tests, 22 Markov tests and 15 importer-risk tests. It checks code and mathematical/probability identities, not source authenticity or predictive adequacy. A Linux/Colab run has not yet been performed.
 
 | Check | Expected | Recorded result |
 |---|---|---|
-| Full automated test suite | All included tests pass | 44 passed in 5.83s on Windows, 2026-11-23 |
+| Full automated test suite | All included tests pass | 59 passed in 2.38s on Windows, 2026-11-23 |
 | Variable-gap likelihood | Closed form agrees with independent numerical optimization | Passed in the above suite |
 | Synthetic irregular series | Approximately recovers known coefficients | Passed in the above suite |
 | Exact GBM and limiting cases | Seed, zero volatility, horizon partition, moments and quantiles | Passed in the above suite |
 | Markov state and matrix fit | Independent counts, row sums, zero-row rejection, training-only holdout isolation | Passed in the above suite |
 | Quote-step path simulation | New-state ordering, explicit day gaps, maturity remainder, seeded replay and long-run synthetic transition frequencies | Passed in the above suite |
+| Importer risk arithmetic | Hand-calculated costs, signed savings, quantile-integral ES with ties/fractional tails, invoice scaling and budget distinction | Passed in the above suite |
+| Reproducible risk report | Same seeds give same outputs; saved report matches fresh run; GBM mean agrees with analytical mean within five MC SE | Passed in the above suite |
 
 Run python -m pytest -q to repeat these checks in the current environment.
 
@@ -160,6 +185,7 @@ The actual baseline coefficients were also recalculated independently using Pyth
 | Automated validation | Check representative parsing, cleaning, return and output behavior. |
 | Stochastic modelling | Fit an annual GBM and sample exact positive rate paths under a stated calendar clock. |
 | Markov chains (DTMC) | Classify training returns into two volatility states, estimate a quote-step transition matrix and sample state-conditioned rate increments. |
+| Monte Carlo integration and LLN | Average independent payment-cost paths, quantify sampling SE, and inspect run-to-run tail estimates. |
 
 ## 8. References
 
