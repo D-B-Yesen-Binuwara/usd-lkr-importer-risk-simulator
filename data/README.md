@@ -43,7 +43,7 @@ The large March 2022 movements are retained. The calibration-return file shows +
 
 data/processed/daily_log_returns.csv calculates each return as ln(current observed selling rate / previous observed selling rate). It uses consecutive valid quote observations. calendar_gap_days makes elapsed calendar time explicit; a multi-day return is not divided by the gap length or relabelled as a one-calendar-day move.
 
-For the first planned GBM calibration, each return's actual interval will be `calendar_gap_days/365` years, and an invoice due in `H` calendar days will have horizon `H/365` years. This assumes Brownian variance accrues across closures; it does not fill unquoted dates. A separate 252-equal-quote-session comparison will test time-convention sensitivity with its own declared future quotation schedule. The 2019–2024 calibration returns include 357 gaps longer than one day, 57 longer than three, and a six-day maximum. [THEORY.md](../THEORY.md) records the formulas and predefined 2019–2021, 2022–2024, and full-period comparisons, plus an extra 2022-excluded sensitivity case. No model parameters or risk outputs have yet been estimated.
+The primary GBM calibration uses each return's actual interval, `calendar_gap_days/365` years. An invoice due in `H` calendar days has model horizon `H/365` years. This assumes Brownian variance accrues across closures; it does not fill unquoted dates. A separate 252-equal-quote-session comparison will test time-convention sensitivity with its own declared future quotation schedule. The 2019–2024 calibration returns include 357 gaps longer than one day, 57 longer than three, and a six-day maximum. [THEORY.md](../THEORY.md) records the fitted baseline and the 2019–2021, 2022–2024, full-period and extra 2022-excluded comparison plan. No importer payment-risk outputs have yet been calculated.
 
 - Calibration quote and return files cover 2019-01-01 to 2024-12-31. A calibration return is included only when both quote dates are in this period.
 - Evaluation quote files cover 2025-01-01 through the available source end date in 2026. An evaluation return is selected by its current quote date; the first observation may use the immediately preceding 2024 quote as the return anchor. No future observation is used.
@@ -58,10 +58,12 @@ Generated files:
 - data/processed/calibration_returns_2019_2024.csv
 - data/processed/evaluation_returns_2025_2026.csv
 - data/processed/data_quality_report.json
+- data/processed/gbm_calibration_2019_2024.json (from `python -m src.calibration`; 1,444 training returns, 2,191 elapsed days, annual `alpha`, `sigma` and `mu`, source and prepared-file hashes)
+- data/processed/markov_calibration_2019_2024.json (from `python -m src.markov`; 70th-percentile training-only stable/volatile rule, state and transition counts, row probabilities, residual RMS and input hashes)
 - figures/usd_lkr_selling_rate.png
 
 ## Limitations
 
 This is a selected-bank daily TT selling-rate series labelled as CBSL in the local CSV. The exact file lineage and source download date are not recorded. The local CSV's reuse terms are unresolved. The official CBSL page's indexed description was checked on 2026-11-23; direct access to the page returned HTTP 403, and the linked source export could not be inspected.
 
-Holidays and irregular source intervals remain in the data. The 2025–2026 evaluation period is a temporal holdout from the initial calibration window; this preparation step does not fit or validate a forecasting or risk model. The 2026 portion ends at the last date supplied in the snapshot.
+Holidays and irregular source intervals remain in the data. The 2025–2026 evaluation period is a temporal holdout excluded from the fitted 2019–2024 GBM and Markov parameters. For the Markov extension, `e_i=(r_i-alpha*delta_years_i)/sqrt(delta_years_i)` and a training-only linear-interpolated 70th percentile of `|e_i|` separates stable (ties included) from volatile. There are 1,011 stable and 433 volatile returns. Its matrix counts successive published-quote increments, not calendar-day transitions. The weekday future-quote helper is a proxy that ignores holidays and settlement timing. These are historical model estimates, not validation of forecasting accuracy. The 2026 portion ends at the last date supplied in the snapshot.

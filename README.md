@@ -1,8 +1,8 @@
 # USD/LKR Importer Risk Simulator
 
-A Python project that prepares Sri Lankan rupee per US dollar (USD/LKR) quotes for a future importer payment-risk simulation.
+A Python project that prepares USD/LKR quotes and fits GBM plus a bounded two-state Markov volatility extension for a future importer payment-risk simulation.
 
-**Current scope:** the repository contains the Stage 2 data-preparation pipeline, processed quote/return files, a data-quality report and automated validation tests. A baseline calibration convention and historical-window comparisons are documented in [THEORY.md](THEORY.md). The GBM, Monte Carlo, Markov-chain and interactive simulation components have not been implemented. The docs/ page is a status page, not a live simulator.
+**Current scope:** the repository contains the data-preparation pipeline, a 2019–2024 calendar-time GBM fit, exact GBM rate simulation, a small quote-step Markov volatility layer and automated checks. The historical-window and time-convention comparison plan is in [THEORY.md](THEORY.md). Importer payment metrics, complete notebook experiments and the interactive demo remain to be built. The docs/ page is a status page.
 
 [Project page source](docs/index.html) (GitHub Pages deployment is not verified) · [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/D-B-Yesen-Binuwara/usd-lkr-importer-risk-simulator/blob/main/notebook/usd-lkr-importer-risk-simulator.ipynb)
 
@@ -12,7 +12,7 @@ A Python project that prepares Sri Lankan rupee per US dollar (USD/LKR) quotes f
 
 Sri Lankan importers with USD invoices need to plan for the LKR cost of future payments. The cost rises when the LKR-per-USD rate rises. A risk simulator can later explore that uncertainty, but its result depends on the rate definition, data quality and time basis used for calibration.
 
-This repository currently prepares the historical input series and holdout window. It does not yet estimate future exchange rates or importer costs.
+The current code fits historical GBM and Markov parameters and can draw future exchange-rate scenarios under declared assumptions. It does not yet calculate importer costs or risk measures.
 
 ## Quick start
 
@@ -36,6 +36,18 @@ Run the data-preparation pipeline from the repository root:
 
 The pipeline reads data/raw/CBSL_USD_TT_Selling.csv, writes outputs to data/processed/, and refreshes figures/usd_lkr_selling_rate.png. The raw input is checked for changes and is not rewritten.
 
+Fit the baseline GBM from the prepared 2019–2024 returns:
+
+    python -m src.calibration
+
+This writes `data/processed/gbm_calibration_2019_2024.json` with annual coefficients, window/count information and input hashes. `src/gbm.py` provides exact seeded terminal and path rate draws; see [USER_GUIDE.md](USER_GUIDE.md).
+
+Fit the bounded two-state extension from the same training returns:
+
+    python -m src.markov
+
+This writes `data/processed/markov_calibration_2019_2024.json` with the training-only state rule, transition counts/probabilities and conditional residual volatilities. A transition is one assumed published-quote increment, not one calendar day. See [USER_GUIDE.md](USER_GUIDE.md) for the explicit future quotation schedule used by the path function.
+
 Run the automated checks:
 
     python -m pytest -q
@@ -50,7 +62,7 @@ In Colab, the repository must be accessible to Colab. Install dependencies and r
 
 ## Using the project
 
-There is no web-demo control panel yet. The current workflow is the command-line data-preparation pipeline and the notebook that inspects its outputs. The pipeline writes a quality report with source-file hash, exclusions, date gaps and period counts. Full setup details are in [USER_GUIDE.md](USER_GUIDE.md).
+There is no web-demo control panel yet. The command-line workflow prepares data and fits the baseline GBM and two-state extension. The existing notebook still inspects prepared data; the final model notebook is later work. The quality report records source hash, exclusions, gaps and period counts. Full setup details are in [USER_GUIDE.md](USER_GUIDE.md).
 
 ## Model and mathematics
 
@@ -60,29 +72,34 @@ For consecutive observed quote rows, the prepared log return is
 r_i = \ln\!\left(\frac{S_i}{S_{i-1}}\right),
 \]
 
-where \(S_i\) is the USD TT selling rate in LKR per USD. The processed file also records the calendar days between quote dates. Missing calendar dates are not interpolated, and preparation does not convert returns to a per-day rate. The planned **primary** GBM uses actual elapsed gaps (`calendar_gap_days/365` years) and an invoice horizon of `H/365` for `H` calendar days. An equal-quote-step, 252-session convention is a separate sensitivity comparison. See [THEORY.md](THEORY.md). No GBM coefficients have yet been estimated.
+where \(S_i\) is the USD TT selling rate in LKR per USD. Missing calendar dates are not interpolated. The primary GBM fit uses each actual gap divided by 365 years; a future `H`-calendar-day rate horizon uses `H/365` years. The fitted annual log drift is 0.079197, volatility is 0.120814 per square-root year, and level drift is 0.086495 per year. These are historical model estimates, not reliable future-rate predictions. The 252-session alternative remains a later sensitivity comparison; see [THEORY.md](THEORY.md).
+
+The bounded Markov layer labels the smallest 70% of training-only absolute gap-standardized GBM residuals “stable” and the rest “volatile.” The fitted quote-step transition matrix is `[[0.814851, 0.185149], [0.431871, 0.568129]]` in stable/volatile order. A future quote step samples the next state first, then uses that state's volatility over the actual assumed calendar gap. The labels are a heuristic, not independently observed economic regimes.
 
 ## Verification
 
-The Stage 2 suite was rerun in the local Windows virtual environment on 2026-11-23 after correcting a `Data`/`data` test-path mismatch: **9 passed in 1.38s** (`.venv\Scripts\python.exe -m pytest -q`). The checks cover parsing, cleaning rules, return construction, period boundaries and output creation. A Linux/Colab test run has not yet been performed, and passing code tests do not establish source authenticity or GBM suitability.
+The full local Windows suite ran on 2026-11-23: **44 passed in 5.83s** (`.venv\Scripts\python.exe -m pytest -q`). It checks data preparation, variable-gap likelihood, exact GBM transitions, training-only Markov classification, row probabilities, linked quote pairs, transition sampling and quote-gap ordering. A Linux/Colab test run has not yet been performed; passing tests do not establish source authenticity or predictive adequacy.
 
 ## Concepts applied
 
-The current work uses time-series data cleaning, source-quality auditing, log-return transformation, chronological calibration/evaluation splits and automated software checks. Stochastic simulation and parameter estimation are future work.
+The current work uses time-series cleaning, log-return modelling, chronological training/holdout separation, Gaussian maximum likelihood with irregular intervals, seeded normal draws, exact GBM transitions, two-state DTMC estimation and analytical/empirical verification.
 
 ## Results
 
 The supplied snapshot has 3,381 usable USD quotes from 2010-05-07 through 2026-11-19. The initial calibration window contains 1,445 quotes and 1,444 in-window returns. The available evaluation window contains 457 quotes and 457 returns; its first return is anchored to the preceding observed quote. The 2026 window is partial in this snapshot.
 
-The rate plot above is descriptive. No forecasting or risk-model result has been produced.
+The baseline fit uses 2,191 elapsed days (6.002740 model years) and ends at the 2024-12-31 selling rate of 297.0162 LKR/USD. The rate plot above is descriptive. No importer payment-cost, VaR or Expected Shortfall result has been produced.
+
+The Markov training fit has 1,011 stable and 433 volatile returns. Its state residual RMS values are 0.010525 and 0.220040 per square-root year, respectively. The volatile estimate is strongly affected by the retained 2022 movements; the transition matrix is not a crisis predictor.
 
 ## Limitations and future work
 
 - The downloader identified the [CBSL daily buy-and-sell page](https://www.cbsl.gov.lk/en/rates-and-indicators/exchange-rates/daily-buy-and-sell-exchange-rates) as the source site, but the exact export request, download date and reuse terms are not recorded. Confirm redistribution rights before publishing the data.
 - The series is a daily TT selling-rate series, not an intraday executable quote or continuous market mid-rate.
-- Quote intervals are irregular. The primary calendar-time model will assume variance accrues over weekends and holidays in proportion to elapsed days; the 252-session sensitivity comparison will assess this choice. Neither convention is established as empirically correct by the data-preparation tests.
+- Quote intervals are irregular. The fitted calendar-time model assumes variance accrues over weekends and holidays in proportion to elapsed days; a separate 252-session sensitivity comparison is still needed. Neither convention is established as empirically correct by code tests.
 - The evaluation period ends at the source snapshot's last date and is therefore incomplete for 2026.
-- The core calibration comparison retains 2022 in the 2019–2024 baseline and contrasts 2019–2021 with 2022–2024. A separately labelled 2022-excluded sensitivity case is planned without rewriting the source series.
+- The baseline fit retains 2022. The 2019–2021, 2022–2024 and separately labelled 2022-excluded model comparisons remain to be run; the unusually large 2022 movements make a constant-coefficient drift especially uncertain.
+- The Markov states are thresholded realized returns, not observed hidden regimes. Its weekday future-quotation helper ignores holidays and settlement timing; any model comparison must declare the same invoice due date and quotation schedule.
 
 ## Key references
 
@@ -93,7 +110,7 @@ See [REFERENCES.md](REFERENCES.md) for source notes.
 
 ## AI assistance
 
-AI tools assisted with planning, documentation and code drafting. Stage 2 includes automated checks; users should run them in their own environment.
+AI tools assisted with planning, documentation, code drafting and model tests. Run the checks in your own environment before relying on outputs.
 
 ## Licence and credits
 

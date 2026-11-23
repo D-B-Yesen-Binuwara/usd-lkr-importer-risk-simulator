@@ -1,0 +1,28 @@
+{
+  "model": "constant-coefficient geometric Brownian motion",
+  "source": "CBSL USD TT Selling Rate",
+  "clock": "elapsed calendar days / 365 years",
+  "variance_estimator": "Gaussian maximum likelihood; residual divisor n",
+  "raw_file": "data/raw/CBSL_USD_TT_Selling.csv",
+  "raw_sha256": "b76b443cee6db1bcaa6ffcb515490aafa8e8c2ef339fa411a328cf287af74969",
+  "prepared_file": "data/processed/calibration_returns_2019_2024.csv",
+  "prepared_sha256": "26c31f3c43d19c80cf1b6f37c1906bc79df46ffff1f25cd76d45aa68cf479849",
+  "calibration": {
+    "window_start": "2019-01-01",
+    "window_end": "2024-12-31",
+    "first_quote_date": "2019-01-01",
+    "last_quote_date": "2024-12-31",
+    "n_returns": 1444,
+    "total_elapsed_days": 2191,
+    "total_elapsed_years": 6.002739726027398,
+    "alpha_per_year": 0.07919696011210609,
+    "sigma_per_sqrt_year": 0.12081424674804953,
+    "mu_per_year": 0.08649500122075539,
+    "last_rate_lkr_per_usd": 297.0162
+  },
+  "limitations": [
+    "2022 movements are retained; constant GBM coefficients may be unstable across regimes.",
+    "Calendar-time variance scaling across weekends and holidays is an assumption.",
+    "The 2025–2026 evaluation snapshot is excluded from this fit."
+  ]
+}

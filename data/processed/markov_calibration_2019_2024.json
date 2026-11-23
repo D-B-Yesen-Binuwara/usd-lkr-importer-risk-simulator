@@ -1,0 +1,68 @@
+{
+  "model": "two-state quote-increment Markov volatility extension",
+  "source": "CBSL USD TT Selling Rate",
+  "return_clock": "elapsed calendar days / 365 years",
+  "transition_clock": "one successive published-quote increment",
+  "state_names": [
+    "stable",
+    "volatile"
+  ],
+  "classification": "abs((log_return - alpha*delta_years)/sqrt(delta_years)); stable at or below training 70th percentile",
+  "quantile_method": "NumPy linear",
+  "state_minimum_training_returns": 10,
+  "raw_file": "data/raw/CBSL_USD_TT_Selling.csv",
+  "raw_sha256": "b76b443cee6db1bcaa6ffcb515490aafa8e8c2ef339fa411a328cf287af74969",
+  "prepared_file": "data/processed/calibration_returns_2019_2024.csv",
+  "prepared_sha256": "26c31f3c43d19c80cf1b6f37c1906bc79df46ffff1f25cd76d45aa68cf479849",
+  "calibration": {
+    "window_start": "2019-01-01",
+    "window_end": "2024-12-31",
+    "first_quote_date": "2019-01-01",
+    "last_quote_date": "2024-12-31",
+    "n_returns": 1444,
+    "threshold_quantile": 0.7,
+    "threshold_abs_residual_per_sqrt_year": 0.026381719589300655,
+    "state_counts": [
+      1011,
+      433
+    ],
+    "transition_counts": [
+      [
+        823,
+        187
+      ],
+      [
+        187,
+        246
+      ]
+    ],
+    "transition_probabilities": [
+      [
+        0.8148514851485148,
+        0.18514851485148515
+      ],
+      [
+        0.43187066974595845,
+        0.5681293302540416
+      ]
+    ],
+    "state_residual_means_per_sqrt_year": [
+      -0.003817001972375244,
+      0.015947994816367023
+    ],
+    "state_volatilities_per_sqrt_year": [
+      0.010525273198268478,
+      0.2200395867740201
+    ],
+    "alpha_per_year": 0.07919696011210609,
+    "last_state": 0,
+    "last_rate_lkr_per_usd": 297.0162
+  },
+  "limitations": [
+    "Realized-return state labels are a heuristic, not verified hidden economic regimes.",
+    "The 2022 jumps remain and strongly affect the volatile-state RMS.",
+    "P is per published quote increment, not per calendar day.",
+    "Future quote schedules are assumptions; the weekday helper ignores holidays and settlement rules.",
+    "The 2025-2026 evaluation snapshot is excluded from threshold, drift, RMS and matrix estimation."
+  ]
+}

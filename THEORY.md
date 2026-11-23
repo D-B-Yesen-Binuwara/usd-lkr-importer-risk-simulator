@@ -2,7 +2,7 @@
 
 ## 1. Problem formulation
 
-The intended application is to examine uncertainty in the LKR cost of future USD-denominated importer payments. This repository prepares historical quote data and records a calibration design. It does not yet estimate a stochastic model or simulate payments.
+The intended application is to examine uncertainty in the LKR cost of future USD-denominated importer payments. This repository prepares historical quotes, fits a calendar-time GBM and a bounded two-state quote-step Markov volatility extension, and provides exact rate transitions under both models. Importer payment-risk calculations are not implemented yet.
 
 ## 2. Data and assumptions
 
@@ -26,7 +26,7 @@ The quantity is dimensionless and represents the continuously compounded change 
 
 ### Selected primary clock: elapsed calendar time
 
-The importer has a calendar due date. The **primary** GBM will use each observed return's actual elapsed interval, \(\Delta t_i=\texttt{calendar\_gap\_days}_i/365\) years. A future invoice due in \(H\) calendar days has horizon \(T=H/365\) years. No weekend or holiday quotes are invented. This choice makes the historical calibration clock and the invoice horizon consistent; it assumes GBM variance accumulates in proportion to elapsed calendar time, including closures. That assumption is a modelling simplification, not a property established by CBSL data.
+The importer has a calendar due date. The **primary** GBM uses each observed return's actual elapsed interval, \(\Delta t_i=\texttt{calendar\_gap\_days}_i/365\) years. A future invoice due in \(H\) calendar days has horizon \(T=H/365\) years. No weekend or holiday quotes are invented. This choice makes the historical calibration clock and the invoice horizon consistent; it assumes GBM variance accumulates in proportion to elapsed calendar time, including closures. That assumption is a modelling simplification, not a property established by CBSL data.
 
 Let \(\alpha=\mu-\tfrac12\sigma^2\) be annual mean log-rate change. Under a constant-parameter GBM with independent Gaussian increments,
 
@@ -37,13 +37,23 @@ r_i\sim N(\alpha\Delta t_i,\,\sigma^2\Delta t_i),\qquad
 \hat\mu=\hat\alpha+\tfrac12\hat\sigma^2_{\mathrm{ML}}.
 \]
 
-The variance divisor \(n\) identifies the maximum-likelihood estimate; an \(n-1\) adjustment would need a different label. Implement \(\hat\sigma=\sqrt{\max(\hat\sigma^2_{\mathrm{ML}},0)}\), checking for positive intervals and a usable positive volatility before stochastic simulation. These are **planned Stage 4 formulas**; no parameters are fitted here. The mean of \(r_i/d_i\) and `std(r)*sqrt(252)` are not the primary variable-gap estimator.
+The variance divisor \(n\) identifies the maximum-likelihood estimate; an \(n-1\) adjustment would need a different label. `src/calibration.py` implements \(\hat\sigma=\sqrt{\max(\hat\sigma^2_{\mathrm{ML}},0)}\), checks positive intervals and requires a positive fitted volatility in its baseline report. The mean of \(r_i/d_i\) and `std(r)*sqrt(252)` are not the primary variable-gap estimator.
+
+The 2019–2024 baseline fit uses 1,444 in-window returns spanning 2,191 calendar days (6.002740 model years). The report in `data/processed/gbm_calibration_2019_2024.json` records the source/prepared-file SHA-256 hashes and these **annual** estimates:
+
+| Parameter | Estimate | Units and meaning |
+|---|---:|---|
+| \(\hat\alpha\) | 0.079196960112 | Mean log-rate change per year. |
+| \(\hat\sigma\) | 0.120814246748 | Rate volatility per square-root year. |
+| \(\hat\mu\) | 0.086495001221 | Drift of the rate level per year, \(\hat\alpha+\hat\sigma^2/2\). |
+
+These describe the fitted historical constant-coefficient model, not a reliable prediction of future USD/LKR. The 2022 movements are retained and can strongly affect the fitted drift and volatility. The 2025–2026 evaluation rows are excluded.
 
 The 2019–2024 calibration file has 1,444 returns: 1,087 with a one-day gap, 40 with two, 260 with three, 44 with four, 10 with five, and 3 with six. Thus 357 span more than one calendar day. A descriptive check found sample SD 0.007050 for one-day returns and 0.004459 for three-day returns. Excluding returns touching 2022 gives 0.004213 and 0.004596, respectively. These groups do not exhibit a simple \(\sqrt{3}\) dispersion ratio, but they also represent different market conditions. This warns that uniform calendar-day variance scaling may fit poorly; it does not justify changing the chosen invoice clock after seeing model outputs.
 
 ### Quote-session clock: predefined sensitivity comparison
 
-Treat every adjacent published quote pair as one equal step and use 252 steps per model year **only for a separate sensitivity run**. With \(a=\operatorname{mean}(r_i)\) and sample SD \(s_r\) in the selected training window, use \(\sigma_{252}=s_r\sqrt{252}\) and \(\mu_{252}=252a+\tfrac12\sigma_{252}^2\). One transition of the later two-state Markov chain means one published-quote increment. Its future rate increments still use actual assumed quotation gaps. For training-only regime classification, use calendar-gap-standardized residuals \(e_i=(r_i-\hat\alpha\Delta t_i)/\sqrt{\Delta t_i}\), then a training-only magnitude threshold. This prevents longer gaps from automatically appearing more volatile solely because they span more days. The Markov model is not implemented yet.
+Treat every adjacent published quote pair as one equal step and use 252 steps per model year **only for a separate sensitivity run**. With \(a=\operatorname{mean}(r_i)\) and sample SD \(s_r\) in the selected training window, use \(\sigma_{252}=s_r\sqrt{252}\) and \(\mu_{252}=252a+\tfrac12\sigma_{252}^2\). This separate 252-session GBM comparison is not yet implemented. The implemented Markov chain has one transition per assumed published-quote increment, while its rate increments retain actual assumed calendar gaps. Its training labels use calendar-gap-standardized residuals; see Section 5.
 
 For a calendar due date, specify an assumed future quotation schedule, count its quote steps \(n_{\mathrm{session}}\), and set the alternative horizon to \(T_{252}=n_{\mathrm{session}}/252\) model years. A Monday–Friday proxy can be used if labelled, with unverified holidays and settlement conventions disclosed. A 90-calendar-day invoice is not automatically 90 quote steps. Keep this schedule separate from the calendar-time primary; do not mix \(\sigma_{252}\) with \(\sqrt{H/365}\) without an explicit conversion rule. Compare the resulting importer VaR and ES later, using the same invoice, due date, starting quote and simulation settings.
 
@@ -53,7 +63,7 @@ The planned geometric Brownian motion model is written as
 dS_t = \mu S_t\,dt + \sigma S_t\,dW_t,
 \]
 
-where the primary \(\mu\) is annual level drift, \(\sigma\) is annual volatility (per square-root year), and \(W_t\) is Brownian motion in elapsed years. This equation is planned theory. The repository has not fitted \(\mu\) or \(\sigma\) or simulated paths.
+where \(\mu\) is annual level drift, \(\sigma\) is annual volatility (per square-root year), and \(W_t\) is Brownian motion in elapsed years. The GBM core now fits these coefficients and can simulate rates. It has not yet converted rates into importer payment or tail-risk results.
 
 ## 4. Calibration periods and sensitivity design
 
@@ -72,19 +82,72 @@ Fit each window with the same variable-gap formula, using only that window's eli
 
 ## 5. Numerical method
 
-No stochastic simulation or numerical integration is implemented at this stage. The data pipeline parses source rows, validates the fields, sorts valid USD observations by date, calculates adjacent-observation log returns and records date gaps. See src/data_loader.py, src/preprocess.py and src/prepare_data.py.
+The data pipeline parses, validates and sorts USD quotes, then calculates adjacent-observation log returns and day gaps. See `src/data_loader.py`, `src/preprocess.py` and `src/prepare_data.py`. `src/calibration.py` fits the variable-gap Gaussian likelihood to training rows whose **two** quote dates lie in the requested window. It validates rate/return arithmetic, positive integer gaps and the CBSL TT selling-rate source before fitting.
+
+`src/gbm.py` uses the exact conditional transition, for any positive elapsed interval \(\delta\) in years and independent \(Z\sim N(0,1)\):
+
+\[
+S_{t+\delta}=S_t\exp\left(\alpha\delta+\sigma\sqrt{\delta}Z\right).
+\]
+
+Terminal-only sampling uses \(\delta=H/365\) directly. A path chart can use daily or caller-supplied positive intervals that sum to the same \(H\) calendar days. Local NumPy generators with explicit seeds give repeatable draws; the exact transition avoids Euler time-step bias. The module also exposes analytical mean, variance and rate quantiles for verification. These are **rate** outputs only; payment costs, VaR and ES belong to later work.
+
+For \(T=H/365\), independent analytical benchmarks are
+
+\[
+E[S_T]=S_0e^{\mu T},\qquad
+\operatorname{Var}(S_T)=S_0^2e^{2\mu T}\bigl(e^{\sigma^2T}-1\bigr),\qquad
+q_p(S_T)=S_0\exp\bigl(\alpha T+\sigma\sqrt{T}\,\Phi^{-1}(p)\bigr).
+\]
+
+Agreement with these identities verifies the sampler under its assumptions; it does not establish forecasting skill on real exchange rates.
+
+### Bounded two-state Markov volatility extension
+
+`src/markov.py` uses the same 2019–2024 training rows and fitted annual GBM log drift \(\hat\alpha\). For each observed quote-to-quote return, let
+
+\[
+e_i=\frac{r_i-\hat\alpha\Delta t_i}{\sqrt{\Delta t_i}},\qquad
+\tau=Q_{0.70}(|e_i|),\qquad
+X_i=\begin{cases}0\;(\text{stable}),&|e_i|\le\tau,\\1\;(\text{volatile}),&|e_i|>\tau.\end{cases}
+\]
+
+The 70th percentile is a declared design choice, computed by NumPy's linear quantile rule on training data only. Ties at the threshold are stable. Standardizing by \(\sqrt{\Delta t_i}\) reduces the automatic effect of longer quote gaps on a magnitude threshold. The residual has annual-volatility units; labels are a heuristic classification of realized returns, not observed or inferred hidden economic regimes. A class with fewer than ten returns fails rather than yielding a fragile fitted state.
+
+Count successive classified published-quote increments \(n_{ab}\), then set \(P_{ab}=n_{ab}/\sum_b n_{ab}\). Both outgoing rows must be observed, contain probabilities in \([0,1]\), and sum to one within \(10^{-12}\); no smoothing row is invented. The state-specific conditional residual RMS is \(\hat\sigma_k=\sqrt{\operatorname{mean}_{i:X_i=k}(e_i^2)}\), using the common \(\hat\alpha\), not a separate drift for each state.
+
+| Training result | Stable (0) | Volatile (1) |
+|---|---:|---:|
+| Return labels | 1,011 | 433 |
+| Residual mean, per square-root year | -0.003817 | 0.015948 |
+| Residual RMS \(\hat\sigma_k\), per square-root year | 0.010525 | 0.220040 |
+
+The training threshold is 0.026381719589 per square-root year. Transition counts are \(\left[\begin{smallmatrix}823&187\\187&246\end{smallmatrix}\right]\), so the quote-step matrix in stable/volatile order is
+
+\[
+P=\begin{pmatrix}0.814851485149&0.185148514851\\0.431870669746&0.568129330254\end{pmatrix}.
+\]
+
+The last training return is labelled stable. For future paths, provide assumed quotation-day offsets measured from the reference date. At each assumed quote, sample the **next** state from the current row of \(P\), then draw an independent normal shock and apply \(\hat\alpha\delta+\hat\sigma_{\mathrm{new}}\sqrt{\delta}Z\), where \(\delta\) is that quote gap divided by 365. If maturity follows the last assumed quote, the residual interval uses the current state without an extra transition. The `weekday_quote_offsets` helper is only a Monday–Friday proxy: it includes unverified weekday holidays and does not model settlement timing. The 90-day smoke check used 64 assumed weekday quotes; its output was checked for positive finite rates, not interpreted as a forecast.
+
+This uses one common **log** drift across states, so the level drift varies with \(\hat\sigma_k^2/2\). The volatile RMS is much larger because the retained 2022 jumps enter that class. Conditional normality, persistence and the future quotation schedule are modelling assumptions; the fitted matrix is not evidence of a crisis predictor. VaR/ES comparison with constant GBM belongs to later importer-risk work.
 
 ## 6. Verification
 
-The Stage 2 tests were rerun in the local Windows virtual environment on 2026-11-23 after fixing the test's `Data`/`data` path: 9 passed in 1.38s. They exercise code behavior using the local source snapshot and small synthetic examples. They do not independently verify the data provider or prove that GBM assumptions fit the exchange-rate series; a Linux/Colab run has not yet been performed.
+The full local Windows suite was rerun after the Stage 5 code and test changes on 2026-11-23: **44 passed in 5.83s** using `.venv\Scripts\python.exe -m pytest -q`. This includes the nine data-preparation tests, 13 GBM test cases and 22 Markov test cases. It checks code and mathematical/probability identities, not the source CSV's authenticity or the real-world predictive adequacy of either model. A Linux/Colab run has not yet been performed.
 
 | Check | Expected | Recorded result |
 |---|---|---|
-| Stage 2 automated test suite | All included tests pass | 9 passed in 1.38s, rerun 2026-11-23 on Windows |
+| Full automated test suite | All included tests pass | 44 passed in 5.83s on Windows, 2026-11-23 |
+| Variable-gap likelihood | Closed form agrees with independent numerical optimization | Passed in the above suite |
+| Synthetic irregular series | Approximately recovers known coefficients | Passed in the above suite |
+| Exact GBM and limiting cases | Seed, zero volatility, horizon partition, moments and quantiles | Passed in the above suite |
+| Markov state and matrix fit | Independent counts, row sums, zero-row rejection, training-only holdout isolation | Passed in the above suite |
+| Quote-step path simulation | New-state ordering, explicit day gaps, maturity remainder, seeded replay and long-run synthetic transition frequencies | Passed in the above suite |
 
 Run python -m pytest -q to repeat these checks in the current environment.
 
-The Stage 3 evidence above was checked by reading the processed calibration-return file and its date/gap columns. No Stage 3 model test or new GBM result exists. Before using a future model, rerun the Stage 2 suite, confirm positive gaps and window counts, exclude evaluation rows from every fit, and verify the variable-gap maximum-likelihood formula against an independent numerical likelihood calculation. Test equal-gap limiting cases, seed reproducibility, analytic GBM moments and the exact calendar horizon. The separate quote-session comparison needs its own coherent future quotation schedule.
+The actual baseline coefficients were also recalculated independently using Python's standard-library `csv`, `math.fsum` and `math.sqrt`; the three values agreed with the saved report to absolute tolerance \(10^{-12}\). The test that fits both the calibration-only file and the complete return history obtained identical baseline coefficients, checking that holdout rows are filtered. The 252-session comparison still needs its own coherent future quotation schedule and later risk-output comparison.
 
 ## 7. Concepts applied
 
@@ -95,7 +158,8 @@ The Stage 3 evidence above was checked by reading the processed calibration-retu
 | Chronological split | Keep 2019–2024 for initial calibration and 2025–2026 for evaluation. |
 | Model clock | Use elapsed calendar time for the primary GBM; compare a separate 252-session convention. |
 | Automated validation | Check representative parsing, cleaning, return and output behavior. |
-| Stochastic modelling | Planned next-stage work; not implemented or verified. |
+| Stochastic modelling | Fit an annual GBM and sample exact positive rate paths under a stated calendar clock. |
+| Markov chains (DTMC) | Classify training returns into two volatility states, estimate a quote-step transition matrix and sample state-conditioned rate increments. |
 
 ## 8. References
 
