@@ -2,9 +2,11 @@
 
 A Python project that prepares USD/LKR quotes and simulates hypothetical importer payment risk with GBM and a bounded two-state Markov volatility extension.
 
-**Current scope:** the repository contains data preparation, calendar-time GBM and bounded Markov fits, importer cost/VaR/ES calculations, seeded scenario comparisons and replicated convergence checks. The complete notebook experiments and interactive demo remain to be built. The docs/ page is a status page.
+**Current scope:** the repository contains data preparation, calendar-time GBM and bounded Markov fits, importer cost/VaR/ES calculations, seeded scenario comparisons, replicated convergence checks, an executed simulation notebook and an offline interactive GBM demo in `docs/`.
 
 [Project page source](docs/index.html) (GitHub Pages deployment is not verified) · [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/D-B-Yesen-Binuwara/usd-lkr-importer-risk-simulator/blob/main/notebook/usd-lkr-importer-risk-simulator.ipynb)
+
+Open `docs/index.html` directly in a browser for the client-side demo. Adjust invoice amount, payment horizon, volatility, path count and seed; Start/Pause/Reset control seeded GBM simulation batches. The page shows a live rate histogram, expected LKR payment, VaR95, ES95, budget exceedance and a mean-cost Monte Carlo interval. A frozen three-increment Python/notebook fixture checks the browser's exact transition and payment calculation to relative tolerance `1e-7`. Local JavaScript parity passed; cross-browser interaction and GitHub Pages deployment have not yet been checked.
 
 ![CBSL USD TT selling-rate snapshot](figures/usd_lkr_selling_rate.png)
 

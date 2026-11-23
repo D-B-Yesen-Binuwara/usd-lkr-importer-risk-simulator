@@ -1,59 +1,25 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Data-preparation status for the USD/LKR importer risk simulator.">
-  <title>USD/LKR Importer Risk Simulator</title>
-  <style>
-    :root { color-scheme: light; --ink:#172b3a; --muted:#526575; --line:#d7e0e7; --accent:#1c6687; --soft:#edf5f8; }
-    * { box-sizing:border-box; }
-    body { margin:0; background:#f7f9fb; color:var(--ink); font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif; }
-    header { padding:3rem max(1.25rem,calc((100vw - 900px)/2)); background:#fff; border-bottom:1px solid var(--line); }
-    main { max-width:900px; margin:2rem auto; padding:0 1.25rem; }
-    h1 { margin:0; font-size:clamp(1.8rem,4vw,2.6rem); line-height:1.15; }
-    header p { color:var(--muted); max-width:62ch; }
-    .status { display:inline-block; padding:.25rem .65rem; border-radius:999px; background:var(--soft); color:var(--accent); font-weight:650; }
-    section { margin:1.25rem 0; padding:1.25rem; background:#fff; border:1px solid var(--line); border-radius:10px; }
-    ul { padding-left:1.2rem; }
-    a { color:var(--accent); }
-    .links { display:flex; flex-wrap:wrap; gap:.75rem 1.25rem; }
-    footer { max-width:900px; margin:2rem auto; padding:0 1.25rem 2rem; color:var(--muted); font-size:.9rem; }
-    code { background:#f0f3f6; padding:.1rem .3rem; border-radius:4px; }
-  </style>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Offline USD/LKR importer payment-risk simulation">
+<title>USD/LKR Importer Risk Simulator</title><link rel="stylesheet" href="style.css">
+<script defer src="reference_config.js"></script><script defer src="app.js"></script>
 </head>
 <body>
-  <header>
-    <span class="status">Model comparisons verified in Python</span>
-    <h1>USD/LKR Importer Risk Simulator</h1>
-    <p>This page describes the current project status. It is a static information page, not an exchange-rate simulation.</p>
-  </header>
-  <main>
-    <section>
-      <h2>Current project stage</h2>
-      <p>The Python pipeline prepares CBSL USD Telegraphic Transfer selling-rate observations, adjacent-observation log returns, a 2019–2024 calibration window and an available 2025–2026 evaluation window.</p>
-      <p>The Python project fits a calendar-gap GBM and a bounded two-state quote-step Markov volatility model to 2019–2024 selling-rate returns. A hypothetical USD 100,000, 90-day invoice run calculates LKR costs and upper-tail risk. Training-window, volatility and 252-session clock comparisons plus replicated convergence checks are now available in Python. Interactive controls are not implemented yet; source CSV reuse terms remain unresolved.</p>
-    </section>
-    <section>
-      <h2>Snapshot</h2>
-      <ul>
-        <li>3,381 usable USD quotes, 2010-05-07 through 2026-11-19.</li>
-        <li>1,445 calibration quotes and 1,444 in-window returns.</li>
-        <li>457 evaluation quotes and 457 evaluation returns in the supplied snapshot.</li>
-      </ul>
-      <p>These are data-preparation counts, not simulated forecasts.</p>
-    </section>
-    <section>
-      <h2>Run locally</h2>
-      <p>Install dependencies from requirements.txt, then run python -m src.prepare_data from the repository root. Run python -m pytest -q to execute the included checks.</p>
-      <nav class="links" aria-label="Project files">
-        <a href="https://github.com/D-B-Yesen-Binuwara/usd-lkr-importer-risk-simulator">Repository</a>
-        <a href="https://github.com/D-B-Yesen-Binuwara/usd-lkr-importer-risk-simulator/blob/main/USER_GUIDE.md">User guide</a>
-        <a href="https://github.com/D-B-Yesen-Binuwara/usd-lkr-importer-risk-simulator/blob/main/data/README.md">Data notes</a>
-        <a href="https://github.com/D-B-Yesen-Binuwara/usd-lkr-importer-risk-simulator/blob/main/notebook/usd-lkr-importer-risk-simulator.ipynb">Notebook</a>
-      </nav>
-    </section>
-  </main>
-  <footer>Page status: deployment to GitHub Pages has not been verified. Dataset reuse terms need confirmation before public redistribution.</footer>
-</body>
-</html>
+<header><h1>USD/LKR Importer Risk Simulator</h1><p>Explore the LKR cost of a hypothetical USD invoice using a seeded exchange-rate simulation. The model is calibrated to 2019–2024 CBSL-labelled USD telegraphic-transfer selling rates.</p></header>
+<main>
+<section aria-labelledby="controls"><h2 id="controls">Set an invoice scenario</h2><form id="settings"><div class="grid">
+<label>USD invoice<input name="invoice" type="number" min="1" max="10000000" value="100000" required></label>
+<label>Days until payment<input name="days" type="number" min="1" max="365" value="90" required></label>
+<label>Volatility multiplier<input name="volatility" type="number" min="0" max="3" step="0.05" value="1" required></label>
+<label>Simulation paths<input name="paths" type="number" min="500" max="20000" step="500" value="10000" required></label>
+<label>Random seed<input name="seed" type="number" min="0" max="4294967295" step="1" value="42" required></label>
+</div></form><p><button id="start">Start / Resume</button><button id="pause" class="secondary" disabled>Pause</button><button id="reset" class="secondary">Reset</button> <span id="status" role="status" aria-live="polite">Ready</span></p>
+<p class="muted">Reference: 297.0162 LKR/USD on 2024-12-31. Budget = 105% of reference payment. GBM log drift 0.079197/year and volatility 0.120814/√year. A run uses the stated seed; changing inputs and pressing Start begins a new run.</p></section>
+<section aria-labelledby="results"><h2 id="results">Simulated payment risk</h2><div class="grid">
+<div class="metric">Expected LKR payment<strong id="mean">—</strong></div><div class="metric">95% Monte Carlo interval for mean<strong id="interval">—</strong></div><div class="metric">VaR95 of extra LKR cost<strong id="var">—</strong></div><div class="metric">ES95 of extra LKR cost<strong id="es">—</strong></div><div class="metric">Chance payment exceeds budget<strong id="budgetOut">—</strong></div>
+</div><h3>Simulated terminal exchange rates</h3><canvas id="chart" role="img" aria-label="Histogram of simulated terminal USD/LKR rates"></canvas><p class="muted">The histogram updates as batches finish. VaR/ES are upper-tail extra costs relative to paying at the reference rate. The mean interval covers simulation sampling error with fixed fitted parameters, not future market or calibration uncertainty.</p></section>
+<section aria-labelledby="about"><h2 id="about">About and how to use</h2><ol><li>Choose invoice size, days to payment, volatility multiplier, path count and seed.</li><li>Press Start. Pause stops new simulation batches; Resume continues the same seeded run. Reset clears results and restores defaults.</li><li>Compare expected payment, upper-tail VaR/ES and budget probability. Repeat with changed assumptions to explore sensitivity.</li></ol><p>The exact calendar-time GBM transition is <code>S(T)=S(0) exp(alpha*T + sigma*sqrt(T)*Z)</code>, where <code>T=days/365</code>. Each browser run draws independent standard-normal shocks using a seeded browser generator. The same numeric seed need not produce NumPy's identical random sequence; parity is checked with explicitly supplied shocks instead.</p><p id="parity" role="status">Checking Python parity…</p><p>This baseline demo uses GBM. The separate Python notebook also reports the two-state Markov extension and sensitivity study. CBSL CSV download details and redistribution rights remain unverified. This is an educational hypothetical model, not a payment quote or forecast.</p><nav><a href="../notebook/usd-lkr-importer-risk-simulator.ipynb">Notebook</a> · <a href="../USER_GUIDE.md">User guide</a> · <a href="../THEORY.md">Theory</a></nav></section>
+</main><footer>Runs entirely in this browser from local files; no server or paid API.</footer>
+</body></html>

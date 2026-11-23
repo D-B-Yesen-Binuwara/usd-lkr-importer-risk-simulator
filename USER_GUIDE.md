@@ -2,7 +2,13 @@
 
 ## What is available
 
-This repository provides data preparation, a 2019–2024 calendar-time GBM fit, a bounded two-state Markov model, and reproducible hypothetical importer payment-risk calculations. The interactive web demo remains to be built.
+This repository provides data preparation, a 2019–2024 calendar-time GBM fit, a bounded two-state Markov model, reproducible hypothetical importer payment-risk calculations and an offline interactive GBM web demo.
+
+## Use the web demo
+
+Open `docs/index.html` directly in Chrome, Edge or Firefox. Set a USD invoice, 1–365 days until payment, 0–3 volatility multiplier, 500–20,000 paths and a nonnegative integer seed. Press **Start** to compute in batches; **Pause** stops new batches, **Start / Resume** continues the same run, and **Reset** clears it. Changing an input after completion and pressing Start starts a fresh run. The rate histogram updates during computation. Expected LKR payment, VaR95/ES95 of signed extra cost, budget exceedance and a conditional 95% Monte Carlo mean interval appear after the first batch.
+
+The page uses the frozen 2024-12-31 quote and calendar-time GBM, with an illustrative budget 5% above reference cost. It does not run the Markov extension. Its seeded browser generator differs from NumPy's; the explicit-shock fixture in `docs/reference_config.js` and the notebook checks the exact Python/browser rate and payment formulas to relative tolerance `1e-7`. The fixture passed in local JavaScript execution. Browser interaction across named browsers and GitHub Pages deployment remain to be verified.
 
 ## Prepare the data
 
@@ -104,4 +110,4 @@ Run `python -m pytest -q` from the repository root. The local Windows virtual en
 - The downloader identified the official CBSL daily buy/sell page, but the exact export, download date and reuse terms for the local CSV remain unresolved.
 - The fitted primary GBM uses each actual calendar gap divided by 365 years; it assumes variance accumulates over non-quotation days. The executed 252-quote-session comparison uses an assumed future weekday schedule and does not establish which clock predicts better; see THEORY.md.
 - The 2025–2026 evaluation data is partial through 2026-11-19.
-- Constant-GBM parameters and the volatile-state RMS reflect the large 2022 movements and may be unstable. The Markov labels are a heuristic, not independently observed economic regimes. The executed sensitivity experiments quantify that dependence but do not validate a forecast. The browser demo remains future work; Monte Carlo intervals are conditional on fitted models.
+- Constant-GBM parameters and the volatile-state RMS reflect the large 2022 movements and may be unstable. The Markov labels are a heuristic, not independently observed economic regimes. The executed sensitivity experiments quantify that dependence but do not validate a forecast. The browser demo uses GBM only; Monte Carlo intervals are conditional on fitted models.
