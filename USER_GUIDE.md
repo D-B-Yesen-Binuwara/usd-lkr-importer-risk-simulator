@@ -27,6 +27,7 @@ The run reads data/raw/CBSL_USD_TT_Selling.csv. It writes cleaned quotes, adjace
 | data/processed/gbm_calibration_2019_2024.json | Annual GBM coefficients, training interval, input hashes and model limitations. |
 | data/processed/markov_calibration_2019_2024.json | Training-only stable/volatile threshold, counts, transition matrix, conditional residual RMS and input hashes. |
 | data/processed/importer_risk_baseline_2019_2024.json | Hypothetical invoice assumptions, seeds, pooled and per-run payment-risk metrics, Monte Carlo uncertainty and limitations. |
+| data/processed/stage7_comparisons.json | Frozen-input GBM calibration, volatility and clock comparisons; per-seed uncertainty and replicated mean-error convergence. |
 
 The first evaluation return can use the final 2024 observation as its previous quote. Calendar gaps are retained; weekends, holidays and missing dates are not filled.
 
@@ -82,17 +83,25 @@ Run `python -m src.run_risk` from the repository root. Its documented default is
 
 The baseline report is a retrospective hypothetical scenario anchored at end-2024, not a real invoice or a live 2026 forecast. Monte Carlo precision does not include parameter, 2022-regime or source-data uncertainty.
 
+## Run verification and sensitivity comparisons
+
+Run `python -m src.experiments`. The command fits the predeclared 2019–2021, 2022–2024 and full 2019–2024 windows, plus a separately labelled 2022-excluded fit using two disjoint blocks of real adjacent returns. It does not create a return bridging 2021 and 2023 or use 2025–2026 to fit parameters. It also tests 0.75× and 1.5× baseline volatility with log drift held fixed, and a separate 252-equal-quote-session approximation. That alternative uses the sample SD of quote returns, 252 sessions/year and 64 assumed future weekday quotes, so its horizon is `64/252` rather than `90/365` years.
+
+The cases reuse the Stage 6 USD 100,000 invoice, reference quote, 90-day due date, LKR budget, eight seeds and 10,000 paths per seed. GBM cases reuse each seed's normal draws to reduce comparison noise. The JSON contains pooled cost/VaR/ES metrics, between-seed SD/min/max and parameter values. `figures/stage7_scenario_comparison.png` shows VaR/ES with **between-seed SD**, not confidence-limit, error bars. `figures/stage7_gbm_convergence.png` shows replicated mean-cost RMSE at 500, 2,000, 8,000 and 32,000 paths across 32 seeds against analytical GBM MC standard error. The observed log–log RMSE slope is −0.495; individual run errors need not decrease monotonically.
+
+The comparisons describe calibration, clock and assumed-volatility sensitivity conditional on the models. They are not a selection of the best forecast window or an out-of-sample validation.
+
 ## Run the notebook
 
 Install the optional notebook interface with python -m pip install notebook if it is not already available, then run jupyter notebook notebook/usd-lkr-importer-risk-simulator.ipynb from the repository root.
 
 ## Run validation checks
 
-Run `python -m pytest -q` from the repository root. The local Windows virtual environment rerun on 2026-11-23 passed 59 tests in 2.38s. The new risk tests cover hand-calculated costs, signed VaR/ES including ties and fractional tails, invoice scaling, a fixed-budget distinction, deterministic zero volatility, invalid inputs and saved-run reproducibility. A Linux/Colab run remains to be done. These checks do not establish upstream CSV authenticity or real-world predictive suitability.
+Run `python -m pytest -q` from the repository root. The local Windows virtual environment rerun on 2026-11-24 passed 64 tests in 5.53s. Stage 7 adds five checks for training-only window definitions, session annualization, analytical GBM moment/quantile agreement, replicated mean-error scaling and saved-comparison reproducibility. A Linux/Colab run remains to be done. These checks do not establish upstream CSV authenticity or real-world predictive suitability.
 
 ## Current limitations
 
 - The downloader identified the official CBSL daily buy/sell page, but the exact export, download date and reuse terms for the local CSV remain unresolved.
-- The fitted primary GBM uses each actual calendar gap divided by 365 years; it assumes variance accumulates over non-quotation days. A separate 252-quote-session comparison remains to be run with a stated future quotation schedule; see THEORY.md.
+- The fitted primary GBM uses each actual calendar gap divided by 365 years; it assumes variance accumulates over non-quotation days. The executed 252-quote-session comparison uses an assumed future weekday schedule and does not establish which clock predicts better; see THEORY.md.
 - The 2025–2026 evaluation data is partial through 2026-11-19.
-- Constant-GBM parameters and the volatile-state RMS reflect the large 2022 movements and may be unstable. The Markov labels are a heuristic, not independently observed economic regimes. Model sensitivity experiments and the browser demo remain future work. The reported Monte Carlo intervals are conditional on the fitted models.
+- Constant-GBM parameters and the volatile-state RMS reflect the large 2022 movements and may be unstable. The Markov labels are a heuristic, not independently observed economic regimes. The executed sensitivity experiments quantify that dependence but do not validate a forecast. The browser demo remains future work; Monte Carlo intervals are conditional on fitted models.

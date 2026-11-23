@@ -2,7 +2,7 @@
 
 A Python project that prepares USD/LKR quotes and simulates hypothetical importer payment risk with GBM and a bounded two-state Markov volatility extension.
 
-**Current scope:** the repository contains data preparation, a 2019–2024 calendar-time GBM fit, a bounded quote-step Markov volatility layer, importer cost/VaR/ES calculations, reproducible seeded runs and automated checks. The historical-window and time-convention comparison plan is in [THEORY.md](THEORY.md). The complete notebook experiments and interactive demo remain to be built. The docs/ page is a status page.
+**Current scope:** the repository contains data preparation, calendar-time GBM and bounded Markov fits, importer cost/VaR/ES calculations, seeded scenario comparisons and replicated convergence checks. The complete notebook experiments and interactive demo remain to be built. The docs/ page is a status page.
 
 [Project page source](docs/index.html) (GitHub Pages deployment is not verified) · [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/D-B-Yesen-Binuwara/usd-lkr-importer-risk-simulator/blob/main/notebook/usd-lkr-importer-risk-simulator.ipynb)
 
@@ -54,6 +54,12 @@ Run the documented hypothetical invoice scenario:
 
 This writes `data/processed/importer_risk_baseline_2019_2024.json`. It uses USD 100,000 due 90 calendar days after 2024-12-31, a fixed LKR budget 5% above the reference cost, and eight independent seeds (42–49) with 10,000 paths per seed and model.
 
+Run the Stage 7 verification and sensitivity study:
+
+    python -m src.experiments
+
+This writes `data/processed/stage7_comparisons.json` and two figures under `figures/`. It compares pre-2022, 2022–2024, full-period and 2022-excluded fits, volatility multipliers, and a separately annualized 252-session clock under the same invoice. It also measures replicated GBM mean-error scaling.
+
 Run the automated checks:
 
     python -m pytest -q
@@ -78,17 +84,17 @@ For consecutive observed quote rows, the prepared log return is
 r_i = \ln\!\left(\frac{S_i}{S_{i-1}}\right),
 \]
 
-where \(S_i\) is the USD TT selling rate in LKR per USD. Missing calendar dates are not interpolated. The primary GBM fit uses each actual gap divided by 365 years; a future `H`-calendar-day rate horizon uses `H/365` years. The fitted annual log drift is 0.079197, volatility is 0.120814 per square-root year, and level drift is 0.086495 per year. These are historical model estimates, not reliable future-rate predictions. The 252-session alternative remains a later sensitivity comparison; see [THEORY.md](THEORY.md).
+where \(S_i\) is the USD TT selling rate in LKR per USD. Missing calendar dates are not interpolated. The primary GBM fit uses each actual gap divided by 365 years; a future `H`-calendar-day rate horizon uses `H/365` years. The fitted annual log drift is 0.079197, volatility is 0.120814 per square-root year, and level drift is 0.086495 per year. These are historical model estimates, not reliable future-rate predictions. The separately fitted 252-session comparison uses 64 assumed future quotes and `64/252` session years; see [THEORY.md](THEORY.md).
 
 The bounded Markov layer labels the smallest 70% of training-only absolute gap-standardized GBM residuals “stable” and the rest “volatile.” The fitted quote-step transition matrix is `[[0.814851, 0.185149], [0.431871, 0.568129]]` in stable/volatile order. A future quote step samples the next state first, then uses that state's volatility over the actual assumed calendar gap. The labels are a heuristic, not independently observed economic regimes.
 
 ## Verification
 
-The full local Windows suite ran on 2026-11-23: **59 passed in 2.38s** (`.venv\Scripts\python.exe -m pytest -q`). It checks data preparation, model fitting/transitions, hand-calculated importer costs, signed upper-tail VaR/ES, invoice scaling, seeded replay and the saved baseline report. A Linux/Colab test run has not yet been performed; passing tests do not establish source authenticity or predictive adequacy.
+The full local Windows suite ran on 2026-11-24: **64 passed in 5.53s** (`.venv\Scripts\python.exe -m pytest -q`). New checks verify period isolation, session-clock formulas, GBM moments/quantile against analytical references, replicated mean-error convergence and reproducibility of the Stage 6 baseline. A Linux/Colab test run and predictive holdout assessment have not yet been performed; passing tests do not establish source authenticity or forecasting adequacy.
 
 ## Concepts applied
 
-The current work uses time-series cleaning, chronological training/holdout separation, variable-gap Gaussian fitting, seeded GBM/DTMC simulation, Monte Carlo integration of payment costs, upper-tail VaR/ES and numerical verification.
+The current work uses time-series cleaning, chronological training/holdout separation, variable-gap Gaussian fitting, seeded GBM/DTMC simulation, Monte Carlo integration of payment costs, upper-tail VaR/ES, scenario comparison and replicated error analysis.
 
 ## Results
 
@@ -103,15 +109,21 @@ The baseline fit uses 2,191 elapsed days (6.002740 model years) and ends at the 
 
 These are reproducible conditional simulation results, not realized payments or predictions. The report contains mean-cost Monte Carlo intervals, per-seed results and between-run VaR/ES variation.
 
+The Stage 7 comparison keeps that invoice, due date, reference rate, budget, seeds and path count fixed while changing one model assumption at a time. Pre-2022 GBM gives VaR95 of LKR 1.67 million; 2022–2024 gives LKR 5.25 million; the full fit gives LKR 3.73 million. At 1.5 times baseline volatility, VaR95 is LKR 5.42 million. The separate 252-session clock gives LKR 3.43 million. These differences are far larger than the recorded between-seed Monte Carlo SDs and show sensitivity to calibration/model choices, not which choice predicts best. The replicated GBM mean-cost RMSE has a log–log slope of **−0.495** across 500–32,000 paths per replicate, near the theoretical −0.5.
+
+![Stage 7 VaR and ES scenario comparison](figures/stage7_scenario_comparison.png)
+
+![Stage 7 GBM Monte Carlo convergence](figures/stage7_gbm_convergence.png)
+
 The Markov training fit has 1,011 stable and 433 volatile returns. Its state residual RMS values are 0.010525 and 0.220040 per square-root year, respectively. The volatile estimate is strongly affected by the retained 2022 movements; the transition matrix is not a crisis predictor.
 
 ## Limitations and future work
 
 - The downloader identified the [CBSL daily buy-and-sell page](https://www.cbsl.gov.lk/en/rates-and-indicators/exchange-rates/daily-buy-and-sell-exchange-rates) as the source site, but the exact export request, download date and reuse terms are not recorded. Confirm redistribution rights before publishing the data.
 - The series is a daily TT selling-rate series, not an intraday executable quote or continuous market mid-rate.
-- Quote intervals are irregular. The fitted calendar-time model assumes variance accrues over weekends and holidays in proportion to elapsed days; a separate 252-session sensitivity comparison is still needed. Neither convention is established as empirically correct by code tests.
+- Quote intervals are irregular. The primary calendar-time and separate 252-session results differ; neither convention is established as empirically correct by code tests. The assumed 64-quote schedule ignores holidays and settlement timing.
 - The evaluation period ends at the source snapshot's last date and is therefore incomplete for 2026.
-- The baseline fit retains 2022. The 2019–2021, 2022–2024 and separately labelled 2022-excluded model comparisons remain to be run; the unusually large 2022 movements make a constant-coefficient drift especially uncertain.
+- The baseline fit retains 2022. The executed 2019–2021, 2022–2024 and separately labelled 2022-excluded comparisons show large parameter and tail-risk variation; this does not validate a preferred forecasting window.
 - The Markov states are thresholded realized returns, not observed hidden regimes. Its weekday future-quotation helper ignores holidays and settlement timing; any model comparison must declare the same invoice due date and quotation schedule.
 - Monte Carlo intervals measure sampling precision with fitted parameters held fixed. They exclude calibration-window and structural model uncertainty; trading fees and importer-specific bank spreads are also excluded.
 

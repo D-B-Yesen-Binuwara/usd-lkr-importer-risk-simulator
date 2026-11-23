@@ -61,7 +61,9 @@ Generated files:
 - data/processed/gbm_calibration_2019_2024.json (from `python -m src.calibration`; 1,444 training returns, 2,191 elapsed days, annual `alpha`, `sigma` and `mu`, source and prepared-file hashes)
 - data/processed/markov_calibration_2019_2024.json (from `python -m src.markov`; 70th-percentile training-only stable/volatile rule, state and transition counts, row probabilities, residual RMS and input hashes)
 - data/processed/importer_risk_baseline_2019_2024.json (from `python -m src.run_risk`; hypothetical USD invoice and 90-day calendar horizon, input hashes, seeds, GBM/Markov payment metrics and Monte Carlo uncertainty)
+- data/processed/stage7_comparisons.json (from `python -m src.experiments`; frozen-input calibration-window, volatility and 252-session comparisons with per-seed variation and replicated convergence)
 - figures/usd_lkr_selling_rate.png
+- figures/stage7_scenario_comparison.png and figures/stage7_gbm_convergence.png (generated Stage 7 charts; error bars in the scenario chart are between-seed SD, not confidence intervals)
 
 ## Limitations
 

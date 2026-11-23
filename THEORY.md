@@ -53,9 +53,9 @@ The 2019–2024 calibration file has 1,444 returns: 1,087 with a one-day gap, 40
 
 ### Quote-session clock: predefined sensitivity comparison
 
-Treat every adjacent published quote pair as one equal step and use 252 steps per model year **only for a separate sensitivity run**. With \(a=\operatorname{mean}(r_i)\) and sample SD \(s_r\) in the selected training window, use \(\sigma_{252}=s_r\sqrt{252}\) and \(\mu_{252}=252a+\tfrac12\sigma_{252}^2\). This separate 252-session GBM comparison is not yet implemented. The implemented Markov chain has one transition per assumed published-quote increment, while its rate increments retain actual assumed calendar gaps. Its training labels use calendar-gap-standardized residuals; see Section 5.
+Treat every adjacent published quote pair as one equal step and use 252 steps per model year **only for a separate sensitivity run**. With \(a=\operatorname{mean}(r_i)\) and sample SD \(s_r\) in the selected training window, use \(\sigma_{252}=s_r\sqrt{252}\) and \(\mu_{252}=252a+\tfrac12\sigma_{252}^2\). Stage 7 implements this alternative in `src/experiments.py`. The implemented Markov chain has one transition per assumed published-quote increment, while its rate increments retain actual assumed calendar gaps. Its training labels use calendar-gap-standardized residuals; see Section 5.
 
-For a calendar due date, specify an assumed future quotation schedule, count its quote steps \(n_{\mathrm{session}}\), and set the alternative horizon to \(T_{252}=n_{\mathrm{session}}/252\) model years. A Monday–Friday proxy can be used if labelled, with unverified holidays and settlement conventions disclosed. A 90-calendar-day invoice is not automatically 90 quote steps. Keep this schedule separate from the calendar-time primary; do not mix \(\sigma_{252}\) with \(\sqrt{H/365}\) without an explicit conversion rule. Compare the resulting importer VaR and ES later, using the same invoice, due date, starting quote and simulation settings.
+For a calendar due date, specify an assumed future quotation schedule, count its quote steps \(n_{\mathrm{session}}\), and set the alternative horizon to \(T_{252}=n_{\mathrm{session}}/252\) model years. Stage 7 uses 64 assumed Monday–Friday quotes and \(64/252\) for the 90-calendar-day invoice. Holidays and settlement conventions remain unverified. A 90-calendar-day invoice is not automatically 90 quote steps. The session parameters and horizon are kept separate from the calendar-time primary; see the Stage 7 risk comparison below.
 
 The planned geometric Brownian motion model is written as
 
@@ -155,13 +155,31 @@ The pooled mean-cost 95% Monte Carlo intervals are approximately LKR [30,326,560
 
 The numerical intervals exclude uncertainty in the historical calibration window, the 2022 regime change, the Markov state rule, time convention and source-data lineage. Fees and importer-specific bank spreads are excluded. Neither model's results are validated predictions of actual future payment costs.
 
+### Stage 7 comparisons and Monte Carlo convergence
+
+`src/experiments.py` freezes the Stage 6 USD 100,000 invoice, 2024-12-31 starting rate, 90-calendar-day due date, LKR budget and eight seeds (42–49, 10,000 paths each). GBM cases use the same normal shocks for each seed, so differences primarily reflect the changed assumption. The calendar-gap baseline retains 2022. The 2022-excluded case concatenates returns from separate date blocks without calculating a false return across the removed year. No 2025–2026 evaluation quote enters a fit. The separate 252-session case changes both annualization and maturity to 64/252 model years; it is a convention sensitivity, not an empirical estimate of the actual future quotation schedule.
+
+| GBM case | Annual log drift | Annual volatility | VaR95 extra cost, LKR | ES95 extra cost, LKR | Between-seed VaR SD, LKR |
+|---|---:|---:|---:|---:|---:|
+| Full 2019–2024 | 0.079197 | 0.120814 | 3,731,194 | 4,582,741 | 25,632 |
+| 2019–2021 | 0.031605 | 0.057523 | 1,674,284 | 2,050,227 | 11,452 |
+| 2022–2024 | 0.127094 | 0.160838 | 5,254,076 | 6,448,509 | 35,679 |
+| 2022 excluded | -0.025861 | 0.076618 | 1,719,723 | 2,223,006 | 15,276 |
+| 0.75 × full volatility | 0.079197 | 0.090611 | 2,915,451 | 3,534,944 | 18,754 |
+| 1.5 × full volatility | 0.079197 | 0.181221 | 5,424,395 | 6,782,090 | 40,398 |
+| 252 quote sessions/year | 0.082964 | 0.106111 | 3,425,303 | 4,175,513 | 22,638 |
+
+Displayed values are rounded; exact results and per-seed metrics are in `data/processed/stage7_comparisons.json`. The between-seed SD describes observed simulation variation across eight runs. It is **not** a confidence interval for VaR and does not include parameter-estimation uncertainty. Window and clock differences are much larger than this simulation variation. They show model sensitivity, not that a particular case forecasts best. The baseline Markov risk is recomputed for reference but is not refitted for each GBM scenario.
+
+The convergence study uses 32 independent seeds (1000–1031) and nested prefixes of 500, 2,000, 8,000 and 32,000 GBM paths. Its root mean squared error for mean payment cost is measured against the analytical GBM expected cost. The observed log–log RMSE slope is **-0.495**, close to the theoretical Monte Carlo value -0.5. Individual seed errors need not decrease at every larger path count; the replicated RMSE is the appropriate aggregate check here. This verifies mean-estimation behavior under the fitted GBM, not predictive accuracy or VaR/ES convergence. The two saved figures show the risk comparisons and the RMSE versus analytical Monte Carlo standard error.
+
 ## 6. Verification
 
-The full local Windows suite was rerun after Stage 6 code and test changes on 2026-11-23: **59 passed in 2.38s** using `.venv\Scripts\python.exe -m pytest -q`. This includes nine data-preparation tests, 13 GBM tests, 22 Markov tests and 15 importer-risk tests. It checks code and mathematical/probability identities, not source authenticity or predictive adequacy. A Linux/Colab run has not yet been performed.
+The full local Windows suite was rerun after Stage 7 code and test changes on 2026-11-24: **64 passed in 5.53s** using `.venv\Scripts\python.exe -m pytest -q`. This includes the prior 59 data, GBM, Markov and importer-risk checks and five new experiment checks. It checks code and mathematical/probability identities, not source authenticity or predictive adequacy. A Linux/Colab run has not yet been performed.
 
 | Check | Expected | Recorded result |
 |---|---|---|
-| Full automated test suite | All included tests pass | 59 passed in 2.38s on Windows, 2026-11-23 |
+| Full automated test suite | All included tests pass | 64 passed in 5.53s on Windows, 2026-11-24 |
 | Variable-gap likelihood | Closed form agrees with independent numerical optimization | Passed in the above suite |
 | Synthetic irregular series | Approximately recovers known coefficients | Passed in the above suite |
 | Exact GBM and limiting cases | Seed, zero volatility, horizon partition, moments and quantiles | Passed in the above suite |
@@ -169,10 +187,12 @@ The full local Windows suite was rerun after Stage 6 code and test changes on 20
 | Quote-step path simulation | New-state ordering, explicit day gaps, maturity remainder, seeded replay and long-run synthetic transition frequencies | Passed in the above suite |
 | Importer risk arithmetic | Hand-calculated costs, signed savings, quantile-integral ES with ties/fractional tails, invoice scaling and budget distinction | Passed in the above suite |
 | Reproducible risk report | Same seeds give same outputs; saved report matches fresh run; GBM mean agrees with analytical mean within five MC SE | Passed in the above suite |
+| Experiment windows and clock | Calibration-only blocks, no false 2022 bridge, independent 252-session formulas and schedule | Passed in the above suite |
+| Stage 7 analytic and convergence checks | GBM mean/variance/quantile agreement, replicated mean-error scaling and saved comparison reproduces Stage 6 baselines | Passed in the above suite |
 
 Run python -m pytest -q to repeat these checks in the current environment.
 
-The actual baseline coefficients were also recalculated independently using Python's standard-library `csv`, `math.fsum` and `math.sqrt`; the three values agreed with the saved report to absolute tolerance \(10^{-12}\). The test that fits both the calibration-only file and the complete return history obtained identical baseline coefficients, checking that holdout rows are filtered. The 252-session comparison still needs its own coherent future quotation schedule and later risk-output comparison.
+The actual baseline coefficients were also recalculated independently using Python's standard-library `csv`, `math.fsum` and `math.sqrt`; the three values agreed with the saved report to absolute tolerance \(10^{-12}\). The test that fits both the calibration-only file and the complete return history obtained identical baseline coefficients, checking that holdout rows are filtered. The Stage 7 session comparison uses the explicit 64-quote weekday proxy; its suitability for real settlement timing remains unverified.
 
 ## 7. Concepts applied
 
