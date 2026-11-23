@@ -14,7 +14,7 @@ from src.prepare_data import prepare_data
 from src.preprocess import calculate_log_returns, split_periods
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-RAW_CBSL = PROJECT_ROOT / "Data" / "raw" / "CBSL_USD_TT_Selling.csv"
+RAW_CBSL = PROJECT_ROOT / "data" / "raw" / "CBSL_USD_TT_Selling.csv"
 RAW_COLUMNS = ["Currency", "Date", "Buy Rate", "Sell Rate"]
 
 

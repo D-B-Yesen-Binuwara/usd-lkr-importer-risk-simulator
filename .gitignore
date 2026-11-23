@@ -22,10 +22,8 @@ venv/
 .DS_Store
 Thumbs.db
 
-# Private documentation
+# Private documentation (kept outside this repository)
 *AI_Use/
-*SE4042_IT23184558_AI_Use/
-SE4042_IT23184558_AI_Use*/
 
+# Private reference material (kept outside this repository)
 Project_References_Private/
-SE4042_IT23184558_AI_Use/

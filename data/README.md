@@ -4,10 +4,14 @@
 
 | File | Description | Source | Licence / reuse | Date accessed |
 |---|---|---|---|---|
-| raw/CBSL_USD_TT_Selling.csv | Local CSV labelled as CBSL USD Telegraphic Transfer daily buying and selling rates. The model input is the selling rate. | Official CBSL reference page: [Daily Buying and Selling Exchange Rate (2005–latest), Telegraphic Transfers](https://www.cbsl.gov.lk/en/node/146). The local file's exact download URL and upstream lineage have not been matched to a specific CBSL export. | Not verified for this local file. Do not assume redistribution rights. | Local download/access date not recorded. The CBSL page returned HTTP 403 during this repository review on 2026-11-21. |
+| raw/CBSL_USD_TT_Selling.csv | Local CSV labelled as CBSL USD Telegraphic Transfer daily buying and selling rates. The model input is the selling rate. | The downloader reported using the [CBSL daily buy-and-sell page](https://www.cbsl.gov.lk/en/rates-and-indicators/exchange-rates/daily-buy-and-sell-exchange-rates). The [CBSL exchange-rate explanation](https://www.cbsl.gov.lk/en/node/146) describes selected licensed-bank TT quotes at 9:30 AM. The exact export request and response have not been retained. | Not verified for this local file. Publicly viewable data do not establish permission to redistribute the raw or derived tables. | Downloader cannot recall the exact date. On 2026-11-23 the official pages were visible through search indexing, but direct fetch returned HTTP 403. |
 | raw/DEXSLUS.csv and raw/DEXSLUS.xlsx | FRED DEXSLUS series retained for reference only; not used as the modelling input. | [FRED DEXSLUS series page](https://fred.stlouisfed.org/series/DEXSLUS). The page identifies the series as daily and not seasonally adjusted, with noon buying rates in New York City for cable transfers. | Review the FRED series notes before sharing. The exact provenance and reuse status of the local copies are not independently verified. | Local file retrieval date not recorded. FRED page checked 2026-11-21. |
 
 The FRED definition differs from the selected CBSL TT selling-rate measure. FRED files are not substituted for the modelling series.
+
+The downloader supplied the official CBSL daily buy-and-sell page as the site used, but cannot recall the download date. Search indexing exposes a CBSL daily buy/sell query form with a date range and USD selection. This narrows the **reported source page**; it does **not** establish the exact query, CSV response, export timestamp or file identity. The local CSV has no embedded source URL, download date or licence statement. Local filesystem or Git timestamps cannot establish the download date. No applicable exchange-rate CSV reuse licence was found in this review. Preserve an original browser download record, response, or CBSL permission statement if available; until then, cite the reported official page while labelling exact file lineage and redistribution permission unverified.
+
+Search-indexed text from two official CBSL Daily Economic Indicators PDFs partially corroborates local values: the local 2026-02-23 USD row (buy 305.6182, sell 313.1434) matches the [23 February report](https://www.cbsl.gov.lk/sites/default/files/daily_economic_indicators_20260223_e.pdf), and the local 2026-06-02 row (buy 326.7561, sell 336.6059) matches the [2 June report](https://www.cbsl.gov.lk/sites/default/files/daily_economic_indicators_20260602_e.pdf). Direct fetches of those PDFs and the exchange-rate page returned HTTP 403 during this check. Two matching indexed rows support the rate definition but do **not** authenticate every CSV row, establish the export/download path or date, or grant redistribution rights.
 
 ## Supplied CBSL CSV snapshot
 
@@ -39,6 +43,8 @@ The large March 2022 movements are retained. The calibration-return file shows +
 
 data/processed/daily_log_returns.csv calculates each return as ln(current observed selling rate / previous observed selling rate). It uses consecutive valid quote observations. calendar_gap_days makes elapsed calendar time explicit; a multi-day return is not divided by the gap length or relabelled as a one-calendar-day move.
 
+For the first planned GBM calibration, each return's actual interval will be `calendar_gap_days/365` years, and an invoice due in `H` calendar days will have horizon `H/365` years. This assumes Brownian variance accrues across closures; it does not fill unquoted dates. A separate 252-equal-quote-session comparison will test time-convention sensitivity with its own declared future quotation schedule. The 2019–2024 calibration returns include 357 gaps longer than one day, 57 longer than three, and a six-day maximum. [THEORY.md](../THEORY.md) records the formulas and predefined 2019–2021, 2022–2024, and full-period comparisons, plus an extra 2022-excluded sensitivity case. No model parameters or risk outputs have yet been estimated.
+
 - Calibration quote and return files cover 2019-01-01 to 2024-12-31. A calibration return is included only when both quote dates are in this period.
 - Evaluation quote files cover 2025-01-01 through the available source end date in 2026. An evaluation return is selected by its current quote date; the first observation may use the immediately preceding 2024 quote as the return anchor. No future observation is used.
 - The source currently has 1,445 calibration quotes and 457 evaluation quotes. Return counts are 1,444 and 457, respectively, in the recorded Stage 2 preparation run.
@@ -56,6 +62,6 @@ Generated files:
 
 ## Limitations
 
-This is a selected-bank daily TT selling-rate series labelled as CBSL in the local CSV. The exact file lineage and source download date are not recorded. The local CSV's reuse terms are unresolved. The official CBSL page could not be fetched during this review, so its contents were not independently rechecked here.
+This is a selected-bank daily TT selling-rate series labelled as CBSL in the local CSV. The exact file lineage and source download date are not recorded. The local CSV's reuse terms are unresolved. The official CBSL page's indexed description was checked on 2026-11-23; direct access to the page returned HTTP 403, and the linked source export could not be inspected.
 
 Holidays and irregular source intervals remain in the data. The 2025–2026 evaluation period is a temporal holdout from the initial calibration window; this preparation step does not fit or validate a forecasting or risk model. The 2026 portion ends at the last date supplied in the snapshot.

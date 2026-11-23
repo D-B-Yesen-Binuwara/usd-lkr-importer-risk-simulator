@@ -157,9 +157,9 @@ def prepare_data(
 def main() -> None:
     project_root = Path(__file__).resolve().parents[1]
     summary = prepare_data(
-        input_path=project_root / "Data" / "raw" / "CBSL_USD_TT_Selling.csv",
-        processed_dir=project_root / "Data" / "processed",
-        figure_path=project_root / "Figures" / "usd_lkr_selling_rate.png",
+        input_path=project_root / "data" / "raw" / "CBSL_USD_TT_Selling.csv",
+        processed_dir=project_root / "data" / "processed",
+        figure_path=project_root / "figures" / "usd_lkr_selling_rate.png",
     )
     print(json.dumps(summary, indent=2, ensure_ascii=False))
 
