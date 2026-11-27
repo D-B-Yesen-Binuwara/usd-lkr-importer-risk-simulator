@@ -6,7 +6,7 @@ A Python project that prepares USD/LKR quotes and simulates hypothetical importe
 
 [Live interactive demo](https://d-b-yesen-binuwara.github.io/usd-lkr-importer-risk-simulator/) · [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/D-B-Yesen-Binuwara/usd-lkr-importer-risk-simulator/blob/main/notebook/usd-lkr-importer-risk-simulator.ipynb)
 
-The hosted demo runs entirely in the browser. Adjust invoice amount, payment horizon, volatility, path count and seed; Start/Pause/Reset control seeded GBM simulation batches. The page shows a live rate histogram, expected LKR payment, VaR95, ES95, budget exceedance and a mean-cost Monte Carlo interval. A frozen three-increment Python/notebook fixture checks the exact transition and payment calculation to relative tolerance `1e-7`. The hosted page and its Start/Pause/Resume/Reset controls were checked on 2026-11-27; direct local-file opening in Chrome, Edge and Firefox remains to be checked.
+The hosted demo runs entirely in the browser. Adjust invoice amount, payment horizon, volatility, path count and seed; Start/Pause/Reset control seeded GBM simulation batches. The page shows a live rate histogram with labeled numerical axes, expected LKR payment, VaR95, ES95, budget exceedance and a mean-cost Monte Carlo interval. The histogram spans the full observed minimum-to-maximum rate, reports its range and accounts for every path; no tail outcomes are clipped into edge bins. A frozen three-increment Python/notebook fixture checks the exact transition and payment calculation to relative tolerance `1e-7`. The hosted page and its Start/Pause/Resume/Reset controls were checked on 2026-11-27; direct local-file opening in Chrome, Edge and Firefox remains to be checked.
 
 ![Historical USD/LKR selling-rate chart](figures/usd_lkr_selling_rate.png)
 
@@ -94,7 +94,7 @@ The bounded Markov layer labels the smallest 70% of training-only absolute gap-s
 
 ## Verification
 
-The full local Windows suite ran on 2026-11-27 with one OpenBLAS thread: **65 passed in 11.05s**. Three separate Node.js demo checks passed. The tests cover period isolation, session-clock formulas, GBM moments/quantile against analytical references, replicated mean-error convergence, the Stage 6 baseline and the browser parity fixture. A fresh Linux/Colab run and predictive holdout assessment have not yet been performed; passing tests do not establish source authenticity or forecasting adequacy.
+The full local Windows suite ran on 2026-11-27 with one OpenBLAS thread: **65 passed in 11.05s**. The Node.js demo suite includes five checks, including that histogram bins include both extreme observations and account for every path. The tests cover period isolation, session-clock formulas, GBM moments/quantile against analytical references, replicated mean-error convergence, the Stage 6 baseline and the browser parity fixture. A fresh Linux/Colab run and predictive holdout assessment have not yet been performed; passing tests do not establish source authenticity or forecasting adequacy.
 
 ## Concepts applied
 

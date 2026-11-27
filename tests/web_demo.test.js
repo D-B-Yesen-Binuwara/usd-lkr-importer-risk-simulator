@@ -7,7 +7,7 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const window = {};
 vm.runInNewContext(fs.readFileSync(path.join(root, 'docs/reference_config.js'), 'utf8'), {window});
-const {exactStep, parityResult, rng, upperTail, metrics, parseSettings} = require('../docs/app.js');
+const {exactStep, parityResult, rng, upperTail, histogramData, metrics, parseSettings} = require('../docs/app.js');
 
 test('frozen Python fixture matches the browser transition and payment', () => {
   const ref = window.IMPORTER_REFERENCE;
@@ -40,4 +40,26 @@ test('declared input boundaries are enforced before seeding a run', () => {
     {days:'366'}, {volatility:''}, {volatility:'3.1'},
     {paths:'20001'}, {paths:'499'},
   ]) assert.equal(parseSettings({...valid, ...override}), null);
+});
+
+test('histogram includes both extreme outcomes and accounts for every path', () => {
+  const outcomes = [297, 600, 900];
+  const hist = histogramData(outcomes, 3);
+  assert.equal(hist.dataMin, 297);
+  assert.equal(hist.dataMax, 900);
+  assert.ok(hist.min <= Math.min(...outcomes));
+  assert.ok(hist.max >= Math.max(...outcomes));
+  assert.equal(hist.belowRange, 0);
+  assert.equal(hist.aboveRange, 0);
+  assert.equal(hist.counts.reduce((sum, count) => sum + count, 0), outcomes.length);
+  assert.equal(hist.counts[0], 1);
+  assert.equal(hist.counts[1], 1);
+  assert.equal(hist.counts.at(-1), 1);
+});
+
+test('constant histogram sample gets visible padding without losing paths', () => {
+  const hist = histogramData([300, 300, 300], 8);
+  assert.ok(hist.min < 300 && hist.max > 300);
+  assert.equal(hist.belowRange + hist.aboveRange, 0);
+  assert.equal(hist.counts.reduce((sum, count) => sum + count, 0), 3);
 });

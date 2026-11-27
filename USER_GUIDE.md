@@ -6,7 +6,7 @@ This repository provides data preparation, a 2019–2024 calendar-time GBM fit, 
 
 ## Use the web demo
 
-Open `docs/index.html` directly in Chrome, Edge or Firefox. Set a USD invoice from 1 to 10,000,000, 1–365 days until payment, 0–3 volatility multiplier, 500–20,000 paths and an integer seed from 0 to 4,294,967,295. Press **Start** to compute in batches; **Pause** stops new batches, **Start / Resume** continues the same run, and **Reset** clears it. Changing an input after completion and pressing Start starts a fresh run. The rate histogram updates during computation. Expected LKR payment, VaR95/ES95 of signed extra cost, budget exceedance and a conditional 95% Monte Carlo mean interval appear after the first batch.
+Open `docs/index.html` directly in Chrome, Edge or Firefox. Set a USD invoice from 1 to 10,000,000, 1–365 days until payment, 0–3 volatility multiplier, 500–20,000 paths and an integer seed from 0 to 4,294,967,295. Press **Start** to compute in batches; **Pause** stops new batches, **Start / Resume** continues the same run, and **Reset** clears it. Changing an input after completion and pressing Start starts a fresh run. The histogram has labeled numerical axes and spans the full observed minimum-to-maximum rate; its caption reports the range and any paths outside it. Expected LKR payment, VaR95/ES95 of signed extra cost, budget exceedance and a conditional 95% Monte Carlo mean interval appear after the first batch.
 
 The page uses the frozen 2024-12-31 quote and calendar-time GBM, with an illustrative budget 5% above reference cost. It does not run the Markov extension. Its seeded browser generator differs from NumPy's; the explicit-shock fixture in `docs/reference_config.js` and the notebook checks the exact Python/browser rate and payment formulas to relative tolerance `1e-7`. On 2026-11-27 the [hosted GitHub Pages demo](https://d-b-yesen-binuwara.github.io/usd-lkr-importer-risk-simulator/) showed parity PASS, completed a seeded run with quantitative outputs and a visible histogram, and responded to Pause, Resume and Reset. Direct local-file opening in each named browser remains to be checked.
 
@@ -105,7 +105,7 @@ Install the optional notebook interface with python -m pip install notebook if i
 
 Run `python -m pytest -q` from the repository root. In this memory-constrained Windows environment, the 2026-11-27 run set `OPENBLAS_NUM_THREADS=1` and passed 65 tests in 11.05s. Stage 7 checks training-only window definitions, session annualization, analytical GBM moment/quantile agreement, replicated mean-error scaling and saved-comparison reproducibility. A fresh Linux/Colab run remains to be done. These checks do not establish upstream CSV authenticity or real-world predictive suitability.
 
-With Node.js installed, run `node --test tests/web_demo.test.js` to check the frozen Python/browser parity fixture, seeded browser draws, tail-risk arithmetic and input limits. This does not replace a visual browser check of the controls and chart.
+With Node.js installed, run `node --test tests/web_demo.test.js` to check the frozen Python/browser parity fixture, seeded browser draws, tail-risk arithmetic, input limits and histogram range/count handling. This does not replace a visual browser check of the controls and chart.
 
 ## Current limitations
 
