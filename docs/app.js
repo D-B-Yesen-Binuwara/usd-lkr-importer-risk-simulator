@@ -24,7 +24,18 @@ function metrics(rates,invoice,budget,referenceRate=REF.rate) {
   const mean=costs.reduce((a,b)=>a+b,0)/n, variance=costs.reduce((a,b)=>a+(b-mean)**2,0)/(n-1);
   return {mean,ciLow:mean-1.959963984540054*Math.sqrt(variance/n),ciHigh:mean+1.959963984540054*Math.sqrt(variance/n),budgetProbability:costs.filter(x=>x>budget).length/n,...upperTail(extra)};
 }
-if(typeof module!=="undefined")module.exports={exactStep,parityResult,rng,normal,upperTail,metrics};
+function parseSettings(raw) {
+  const fields=["invoice","days","volatility","paths","seed"];
+  if(fields.some(key=>typeof raw[key]!=="string"||raw[key].trim()===""))return null;
+  const invoice=Number(raw.invoice),days=Number(raw.days),multiplier=Number(raw.volatility),target=Number(raw.paths),seed=Number(raw.seed);
+  if(!Number.isInteger(invoice)||invoice<1||invoice>10000000||
+     !Number.isInteger(days)||days<1||days>365||
+     !Number.isFinite(multiplier)||multiplier<0||multiplier>3||
+     !Number.isInteger(target)||target<500||target>20000||
+     !Number.isInteger(seed)||seed<0||seed>4294967295)return null;
+  return {invoice,days,multiplier,target,seed};
+}
+if(typeof module!=="undefined")module.exports={exactStep,parityResult,rng,normal,upperTail,metrics,parseSettings};
 if(typeof document!=="undefined")document.addEventListener("DOMContentLoaded",()=>{
   const $=id=>document.getElementById(id), fmt=x=>new Intl.NumberFormat("en-US",{maximumFractionDigits:0}).format(x);
   const form=$("settings"), start=$("start"), pause=$("pause"), reset=$("reset"), canvas=$("chart"), ctx=canvas.getContext("2d");
@@ -44,7 +55,7 @@ if(typeof document!=="undefined")document.addEventListener("DOMContentLoaded",()
     const m=metrics(s.rates,s.invoice,s.budget);$("mean").textContent=`LKR ${fmt(m.mean)}`;$("interval").textContent=`LKR ${fmt(m.ciLow)} – ${fmt(m.ciHigh)}`;$("var").textContent=`LKR ${fmt(m.var95)}`;$("es").textContent=`LKR ${fmt(m.es95)}`;$("budgetOut").textContent=`${(100*m.budgetProbability).toFixed(1)}%`;
   }
   function tick(){if(!state||state.paused)return;const s=state, n=Math.min(250,s.target-s.done),T=s.days/365;for(let i=0;i<n;i++)s.rates.push(REF.rate*Math.exp(REF.alpha*T+REF.sigma*s.multiplier*Math.sqrt(T)*normal(s.rand)));s.done+=n;render();if(s.done<s.target)timer=setTimeout(tick,16);}
-  start.onclick=()=>{if(state&&state.paused){state.paused=false;render();tick();return;}const f=new FormData(form),invoice=Number(f.get("invoice")),days=Number(f.get("days")),multiplier=Number(f.get("volatility")),target=Number(f.get("paths")),seed=Number(f.get("seed"));if(!Number.isFinite(invoice)||invoice<=0||!Number.isInteger(days)||days<1||days>365||!Number.isFinite(multiplier)||multiplier<0||multiplier>3||!Number.isInteger(target)||target<500||target>20000||!Number.isInteger(seed)||seed<0){$("status").textContent="Check the input ranges.";return;}state={invoice,days,multiplier,target,seed,rand:rng(seed),budget:invoice*REF.rate*1.05,rates:[],done:0,paused:false};render();tick();};
+  start.onclick=()=>{if(state&&state.paused){state.paused=false;render();tick();return;}const settings=parseSettings(Object.fromEntries(new FormData(form)));if(!form.checkValidity()||!settings){$("status").textContent="Check the input ranges.";return;}const {invoice,days,multiplier,target,seed}=settings;state={invoice,days,multiplier,target,seed,rand:rng(seed),budget:invoice*REF.rate*1.05,rates:[],done:0,paused:false};render();tick();};
   pause.onclick=()=>{if(timer)clearTimeout(timer);timer=null;state.paused=true;render();};
   reset.onclick=()=>{if(timer)clearTimeout(timer);timer=null;state=null;form.reset();for(const id of ["mean","interval","var","es","budgetOut"])$(id).textContent="—";render();};
   render();
