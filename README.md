@@ -10,7 +10,11 @@ The hosted demo runs entirely in the browser. Adjust invoice amount, payment hor
 
 ![Historical USD/LKR selling-rate chart](figures/usd_lkr_selling_rate.png)
 
-The chart shows the supplied historical data. A screenshot of the running web demo will be added after it is captured and reviewed.
+The chart shows the supplied historical data.
+
+![Live demo default scenario showing the invoice controls, simulated payment-risk results, and terminal exchange-rate histogram with labeled numerical axes](figures/live_demo_default_run.png)
+
+*Default scenario: USD 100,000 invoice, 90 days until payment, 10,000 paths and seed 42. The histogram shows terminal exchange rates in LKR/USD and frequency across simulation paths.*
 
 ## The problem
 
