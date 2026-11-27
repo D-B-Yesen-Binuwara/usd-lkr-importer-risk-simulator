@@ -4,11 +4,13 @@ A Python project that prepares USD/LKR quotes and simulates hypothetical importe
 
 **Current scope:** the repository contains data preparation, calendar-time GBM and bounded Markov fits, importer cost/VaR/ES calculations, seeded scenario comparisons, replicated convergence checks, an executed simulation notebook and an offline interactive GBM demo in `docs/`.
 
-[Project page source](docs/index.html) (GitHub Pages deployment is not verified) · [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/D-B-Yesen-Binuwara/usd-lkr-importer-risk-simulator/blob/main/notebook/usd-lkr-importer-risk-simulator.ipynb)
+[Live interactive demo](https://d-b-yesen-binuwara.github.io/usd-lkr-importer-risk-simulator/) · [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/D-B-Yesen-Binuwara/usd-lkr-importer-risk-simulator/blob/main/notebook/usd-lkr-importer-risk-simulator.ipynb)
 
-Open `docs/index.html` directly in a browser for the client-side demo. Adjust invoice amount, payment horizon, volatility, path count and seed; Start/Pause/Reset control seeded GBM simulation batches. The page shows a live rate histogram, expected LKR payment, VaR95, ES95, budget exceedance and a mean-cost Monte Carlo interval. A frozen three-increment Python/notebook fixture checks the browser's exact transition and payment calculation to relative tolerance `1e-7`. Local JavaScript parity passed; cross-browser interaction and GitHub Pages deployment have not yet been checked.
+The hosted demo runs entirely in the browser. Adjust invoice amount, payment horizon, volatility, path count and seed; Start/Pause/Reset control seeded GBM simulation batches. The page shows a live rate histogram, expected LKR payment, VaR95, ES95, budget exceedance and a mean-cost Monte Carlo interval. A frozen three-increment Python/notebook fixture checks the exact transition and payment calculation to relative tolerance `1e-7`. The hosted page and its Start/Pause/Resume/Reset controls were checked on 2026-11-27; direct local-file opening in Chrome, Edge and Firefox remains to be checked.
 
-![CBSL USD TT selling-rate snapshot](figures/usd_lkr_selling_rate.png)
+![Historical USD/LKR selling-rate chart](figures/usd_lkr_selling_rate.png)
+
+The chart shows the supplied historical data. A screenshot of the running web demo will be added after it is captured and reviewed.
 
 ## The problem
 
@@ -66,6 +68,8 @@ Run the automated checks:
 
     python -m pytest -q
 
+On a memory-constrained Windows environment, set `$env:OPENBLAS_NUM_THREADS="1"` before running the suite. The import-backend regression test limits its own child process to one OpenBLAS thread.
+
 Open the prepared-data notebook locally:
 
 The notebook interface is optional and is not listed in requirements.txt. If needed, install it with python -m pip install notebook.
@@ -76,23 +80,21 @@ In Colab, the repository must be accessible to Colab. Install dependencies and r
 
 ## Using the project
 
-There is no web-demo control panel yet. The command-line workflow prepares data, fits both models and runs the importer payment-risk scenario. The existing notebook still inspects prepared data; the final model notebook is later work. Full setup details are in [USER_GUIDE.md](USER_GUIDE.md).
+Use the [live demo](https://d-b-yesen-binuwara.github.io/usd-lkr-importer-risk-simulator/) to vary an illustrative invoice, payment horizon and volatility assumption. Use the [notebook](notebook/usd-lkr-importer-risk-simulator.ipynb) for the full GBM and Markov simulation, verification and comparisons. The command-line workflow can reproduce the saved results; setup details are in [USER_GUIDE.md](USER_GUIDE.md).
 
 ## Model and mathematics
 
 For consecutive observed quote rows, the prepared log return is
 
-\[
-r_i = \ln\!\left(\frac{S_i}{S_{i-1}}\right),
-\]
+$$r_i = \ln\left(\frac{S_i}{S_{i-1}}\right).$$
 
-where \(S_i\) is the USD TT selling rate in LKR per USD. Missing calendar dates are not interpolated. The primary GBM fit uses each actual gap divided by 365 years; a future `H`-calendar-day rate horizon uses `H/365` years. The fitted annual log drift is 0.079197, volatility is 0.120814 per square-root year, and level drift is 0.086495 per year. These are historical model estimates, not reliable future-rate predictions. The separately fitted 252-session comparison uses 64 assumed future quotes and `64/252` session years; see [THEORY.md](THEORY.md).
+where $S_i$ is the USD TT selling rate in LKR per USD. Missing calendar dates are not interpolated. The primary GBM fit uses each actual gap divided by 365 years; a future $H$-calendar-day rate horizon uses $H/365$ years. The fitted annual log drift is 0.079197, volatility is 0.120814 per square-root year, and level drift is 0.086495 per year. These are historical model estimates, not reliable future-rate predictions. The separately fitted 252-session comparison uses 64 assumed future quotes and $64/252$ session years; see [THEORY.md](THEORY.md).
 
 The bounded Markov layer labels the smallest 70% of training-only absolute gap-standardized GBM residuals “stable” and the rest “volatile.” The fitted quote-step transition matrix is `[[0.814851, 0.185149], [0.431871, 0.568129]]` in stable/volatile order. A future quote step samples the next state first, then uses that state's volatility over the actual assumed calendar gap. The labels are a heuristic, not independently observed economic regimes.
 
 ## Verification
 
-The full local Windows suite ran on 2026-11-24: **64 passed in 5.53s** (`.venv\Scripts\python.exe -m pytest -q`). New checks verify period isolation, session-clock formulas, GBM moments/quantile against analytical references, replicated mean-error convergence and reproducibility of the Stage 6 baseline. A Linux/Colab test run and predictive holdout assessment have not yet been performed; passing tests do not establish source authenticity or forecasting adequacy.
+The full local Windows suite ran on 2026-11-27 with one OpenBLAS thread: **65 passed in 11.05s**. Three separate Node.js demo checks passed. The tests cover period isolation, session-clock formulas, GBM moments/quantile against analytical references, replicated mean-error convergence, the Stage 6 baseline and the browser parity fixture. A fresh Linux/Colab run and predictive holdout assessment have not yet been performed; passing tests do not establish source authenticity or forecasting adequacy.
 
 ## Concepts applied
 
@@ -116,6 +118,8 @@ The Stage 7 comparison keeps that invoice, due date, reference rate, budget, see
 ![Stage 7 VaR and ES scenario comparison](figures/stage7_scenario_comparison.png)
 
 ![Stage 7 GBM Monte Carlo convergence](figures/stage7_gbm_convergence.png)
+
+The GBM fit is also checked against an independent numerical likelihood optimizer, while the exact transition is checked against analytical moments and quantiles. The convergence plot measures mean-cost RMSE over 32 independent seeds at four path counts. The calibration-window comparison uses only 2019–2024 training returns; the 2022-excluded case joins two separate return blocks without inventing a return across the omitted year. See [THEORY.md](THEORY.md) and [tests/test_experiments.py](tests/test_experiments.py) for the methods and checks.
 
 The Markov training fit has 1,011 stable and 433 volatile returns. Its state residual RMS values are 0.010525 and 0.220040 per square-root year, respectively. The volatile estimate is strongly affected by the retained 2022 movements; the transition matrix is not a crisis predictor.
 

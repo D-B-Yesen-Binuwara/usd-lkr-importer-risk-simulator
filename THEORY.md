@@ -175,11 +175,11 @@ The convergence study uses 32 independent seeds (1000–1031) and nested prefixe
 
 ## 6. Verification
 
-The full local Windows suite was rerun after Stage 7 code and test changes on 2026-11-24: **64 passed in 5.53s** using `.venv\Scripts\python.exe -m pytest -q`. This includes the prior 59 data, GBM, Markov and importer-risk checks and five new experiment checks. It checks code and mathematical/probability identities, not source authenticity or predictive adequacy. A Linux/Colab run has not yet been performed.
+The full local Windows suite was rerun on 2026-11-27 with `OPENBLAS_NUM_THREADS=1`: **65 passed in 11.05s** using `.venv\Scripts\python.exe -m pytest -q`. The import-backend regression check confines its own child process to one OpenBLAS thread so it can run in memory-constrained environments. The suite checks code and mathematical/probability identities, not source authenticity or predictive adequacy. A fresh Linux/Colab run has not yet been performed.
 
 | Check | Expected | Recorded result |
 |---|---|---|
-| Full automated test suite | All included tests pass | 64 passed in 5.53s on Windows, 2026-11-24 |
+| Full automated test suite | All included tests pass | 65 passed in 11.05s on Windows, 2026-11-27, with one OpenBLAS thread |
 | Variable-gap likelihood | Closed form agrees with independent numerical optimization | Passed in the above suite |
 | Synthetic irregular series | Approximately recovers known coefficients | Passed in the above suite |
 | Exact GBM and limiting cases | Seed, zero volatility, horizon partition, moments and quantiles | Passed in the above suite |

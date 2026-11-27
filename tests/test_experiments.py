@@ -26,11 +26,13 @@ def test_imported_modules_keep_caller_plot_backend() -> None:
     """Notebook imports must not replace an already selected display backend."""
     env = os.environ.copy()
     env["MPLBACKEND"] = "svg"
+    env["OPENBLAS_NUM_THREADS"] = "1"
     result = subprocess.run(
         [sys.executable, "-c", "import src.prepare_data, src.experiments; "
          "import matplotlib; print(matplotlib.get_backend())"],
-        cwd=ROOT, env=env, capture_output=True, text=True, check=True,
+        cwd=ROOT, env=env, capture_output=True, text=True,
     )
+    assert result.returncode == 0, f"stdout: {result.stdout}\nstderr: {result.stderr}"
     assert result.stdout.strip().lower() == "svg"
 
 
