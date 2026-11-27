@@ -1,0 +1,4 @@
+# Keep the original CBSL export and generated CSV bytes identical on every OS.
+# The quality and calibration reports hash these files byte-for-byte.
+data/raw/CBSL_USD_TT_Selling.csv -text whitespace=cr-at-eol
+data/processed/*.csv -text whitespace=cr-at-eol
