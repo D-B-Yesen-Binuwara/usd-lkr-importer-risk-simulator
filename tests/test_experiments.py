@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import json
+import os
 from math import sqrt
 from pathlib import Path
+import subprocess
+import sys
 
 import numpy as np
 import pandas as pd
@@ -17,6 +20,18 @@ from src.gbm import simulate_terminal_rates, theoretical_terminal_moments, theor
 
 ROOT = Path(__file__).resolve().parents[1]
 TRAINING = ROOT / "data" / "processed" / "calibration_returns_2019_2024.csv"
+
+
+def test_imported_modules_keep_caller_plot_backend() -> None:
+    """Notebook imports must not replace an already selected display backend."""
+    env = os.environ.copy()
+    env["MPLBACKEND"] = "svg"
+    result = subprocess.run(
+        [sys.executable, "-c", "import src.prepare_data, src.experiments; "
+         "import matplotlib; print(matplotlib.get_backend())"],
+        cwd=ROOT, env=env, capture_output=True, text=True, check=True,
+    )
+    assert result.stdout.strip().lower() == "svg"
 
 
 def test_predeclared_windows_use_training_only_and_no_2022_bridge() -> None:

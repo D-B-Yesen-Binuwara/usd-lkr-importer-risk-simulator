@@ -12,7 +12,8 @@ from typing import Any
 
 import matplotlib
 
-matplotlib.use("Agg")
+if __name__ == "__main__":
+    matplotlib.use("Agg")
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import pandas as pd
